@@ -17,10 +17,13 @@ class Editor {
         // this.angle 		= angle;
         this.$btn = $('#btn');
         this.context.drawImage(this.image, 0, 0);
-        // this.$btn.on('click', this.Rotate.bind(this));
     }
     Rotate(angle) {
         this.context.clearRect(0, 0, this.image.width, this.image.height);
+        // this.canvas.width = this.image.height * Math.sin(90 - angle) + this.image.width * Math.cos(90 - angle);
+        // this.canvas.height = this.image.height * Math.cos(90 - angle) + this.image.width * Math.sin(90 - angle);
+        // this.canvas.width = 500;
+        // this.canvas.height = 500;
         this.context.save();
         this.context.translate(this.image.width / 2, this.image.height / 2);
         this.context.rotate(angle * TO_RADIANS);
