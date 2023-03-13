@@ -4,20 +4,23 @@
 	<meta charset="UTF-8">
 	<title>Editor</title>
 	<script src="https://yastatic.net/jquery/3.3.1/jquery.min.js"></script>
-	<script src="/js/editor.js"></script>
+	<script src="js/editor.js"></script>
 	<link rel="stylesheet" href="css/editor.css" type="text/css"/>
 </head>
 <body>
 	<div>
 		<canvas id = "test" width = "300" height = "300"></canvas>
-		<div class = "container">
-			<img src = "css/pic/1.jpg" id = "img">
-		</div>
 		<div class = "all_btn">
-			<div id = "btn" onclick="editor.Rotate(45);">45</div>
-			<div id = "btn1" onclick="editor.Rotate(30);">30</div>
-			<div id = "btn2" onclick="editor.Rotate(120);">120</div>
-			<div id = "btn3" onclick="editor.Rotate(0);">Вернуть</div>
+			<div onclick="editor.Rotate(45);">45</div>
+			<div onclick="editor.Rotate(30);">30</div>
+			<div onclick="editor.Rotate(120);">120</div>
+			<div onclick="editor.Rotate(35);">35</div>
+			<div onclick="editor.Rotate(5);">5</div>
+			<div onclick="editor.Rotate(-5);">-5</div>
+			<div onclick="editor.Rotate(90);">90</div>
+			<div onclick="editor.Rotate(180);">180</div>
+			<div onclick="editor.Rotate(270);">270</div>
+			<div onclick="editor.Rotate(0);">Вернуть</div>
 		</div>
 	</div>
   <script>

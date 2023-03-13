@@ -3,10 +3,18 @@
 /// <reference types="jqueryui" />
 declare const TO_RADIANS: number;
 declare class Editor {
-    canvas: HTMLCanvasElement;
+    btn: JQuery;
+    canvas: JQuery<HTMLCanvasElement>;
     context: CanvasRenderingContext2D;
-    image: HTMLImageElement;
-    $btn: JQuery;
+    image: JQuery<HTMLImageElement>;
+    scale: number;
+    wh: number;
+    width: number;
+    height: number;
+    angle: number;
     constructor();
-    Rotate(angle: any): void;
+    Scale(scale: number): void;
+    Rotate(angle: number): void;
+    protected draw(): void;
+    private Search;
 }
