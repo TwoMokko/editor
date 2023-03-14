@@ -1,8 +1,6 @@
 "use strict";
-// import Event = JQuery.Event;
 const TO_RADIANS = Math.PI / 180;
 class Editor {
-    btn;
     canvas;
     context;
     image;
@@ -11,17 +9,12 @@ class Editor {
     width;
     height;
     angle;
-    // x					: number;
-    // y					: number;
-    // angle				: number;
+    mouse_x;
+    mouse_y;
     constructor() {
         this.canvas = $('canvas#test');
         this.context = this.canvas[0].getContext('2d');
         this.image = $('<img/>', {});
-        // this.x 			= x;
-        // this.y 			= y;
-        // this.angle 		= angle;
-        this.btn = $('#btn');
         this.angle = 0;
         this.image[0].onload = () => {
             this.width = this.image[0].width;
@@ -32,11 +25,22 @@ class Editor {
             // this.canvas.height(this.wh * this.scale);
             // this.context.scale(this.scale, this.scale);
             // this.context.drawImage(this.image[0], (this.wh - this.image.width()) / 2, (this.wh - this.image.height()) / 2);
-            this.Scale(1);
+            this.Scale(0.25);
             this.canvas.on('wheel', (e) => {
                 e.originalEvent.deltaY < 0 ? this.Scale(this.scale * 1.1) : this.Scale(this.scale / 1.1);
             });
+            this.canvas.on('mousedown', (e) => {
+                this.mouse_x = e.pageX;
+                // this.mouse_y = e.pageY;
+                this.canvas.on('mousemove.editor', this.Move.bind(this));
+                this.canvas.on('mouseup.editor', () => {
+                    this.canvas.off('mousemove.editor');
+                    this.canvas.off('mouseup.editor');
+                });
+            });
         };
+        $(document).on('keyup', (e) => { if (e.key == "Escape")
+            this.Rotate(0); });
         this.image[0].src = 'css/pic/2.jpg';
     }
     Scale(scale) {
@@ -44,9 +48,9 @@ class Editor {
         this.canvas[0].width = this.wh * this.scale;
         this.canvas[0].height = this.wh * this.scale;
         this.context.scale(this.scale, this.scale);
-        this.draw();
+        this.Draw();
     }
-    Rotate(angle) { this.angle = angle; this.draw(); }
+    Rotate(angle) { this.angle = angle; this.Draw(); }
     // const A = this.Search(this.image.width / 2, this.image.height / 2, angle * TO_RADIANS);
     // const B = this.Search(- this.image.width / 2, this.image.height / 2, angle * TO_RADIANS);
     //
@@ -57,8 +61,7 @@ class Editor {
     //
     // this.canvas.width = 2 * new_w;
     // this.canvas.height = 2 * new_h;
-    draw() {
-        console.log(this.angle, this.scale, this.wh, this.width, this.height);
+    Draw() {
         this.context.clearRect(0, 0, this.wh, this.wh);
         this.context.save();
         this.context.translate(this.wh / 2, this.wh / 2);
@@ -66,18 +69,11 @@ class Editor {
         this.context.drawImage(this.image[0], -this.width / 2, -this.height / 2);
         this.context.restore();
     }
-    // public Rotate(angle) {
-    // 	this.context.save();
-    // 	this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    // 	this.context.translate(this.canvas.width / 2, this.canvas.height / 2);
-    // 	this.context.rotate(angle);
-    // 	this.context.fillRect(0 - this.canvas.width / 2, 0 - this.canvas.height / 2, 150, 150);
-    // 	this.context.restore();
-    // }
-    Search(x, y, angle) {
-        const ca = Math.cos(angle);
-        const sa = Math.sin(angle);
-        return [x * ca - y * sa, x * sa + y * ca];
+    Move(e) {
+        let angle = this.angle + e.pageX - this.mouse_x;
+        this.Rotate(angle);
+        this.mouse_x = e.pageX;
+        // this.mouse_y = e.pageY;
     }
 }
 //# sourceMappingURL=editor.js.map

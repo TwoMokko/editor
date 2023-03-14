@@ -1,15 +1,9 @@
+body {
+  margin: 0;
+  text-align: center;
+}
 body > div {
   display: inline-block;
-}
-
-.all_btn {
-  display: flex; /*justify-content: center;*/
-  gap: 5px;
-}
-.all_btn > div {
-  padding: 1rem;
-  background-color: cadetblue;
-  cursor: pointer;
 }
 
 .container {
