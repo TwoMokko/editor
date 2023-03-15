@@ -3,7 +3,10 @@
 body {
 	//display: flex; height: 100%; justify-content: center; align-items: center; overflow: hidden;
 	margin: 0; text-align: center;
-	> div { display: inline-block; }
+	//> div { display: inline-block; }
 }
 
-.container { display: none; }
+.container {
+	display: flex; justify-content: center; grid-gap: 1rem; padding: 2rem;
+	.btn { padding: 1rem; background-color: cadetblue; cursor: pointer; }
+}

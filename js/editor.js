@@ -1,21 +1,41 @@
 "use strict";
 const TO_RADIANS = Math.PI / 180;
+var States;
+(function (States) {
+    States[States["None"] = 0] = "None";
+    States[States["Ready"] = 1] = "Ready";
+    States[States["Crop"] = 2] = "Crop";
+    States[States["Rotate"] = 3] = "Rotate";
+})(States || (States = {}));
 class Editor {
     canvas;
     context;
     image;
+    container;
+    btn_rotate;
+    btn_crop;
+    state;
     scale;
     wh;
     width;
     height;
     angle;
+    mouse_angle_from;
+    mouse_angle;
     mouse_x;
     mouse_y;
     constructor() {
+        this.state = States.None;
         this.canvas = $('canvas#test');
         this.context = this.canvas[0].getContext('2d');
-        this.image = $('<img/>', {});
         this.angle = 0;
+        this.image = $('<img/>', {});
+        /* Elements */
+        this.container = $('<div/>', { class: 'container' });
+        this.btn_rotate = $('<div/>', { class: 'btn' }).text('Повернуть');
+        this.btn_crop = $('<div/>', { class: 'btn' }).text('Обрезать');
+        /* Building DOM */
+        $('body').prepend(this.container.append(this.btn_rotate, this.btn_crop));
         this.image[0].onload = () => {
             this.width = this.image[0].width;
             this.height = this.image[0].height;
@@ -26,17 +46,25 @@ class Editor {
             // this.context.scale(this.scale, this.scale);
             // this.context.drawImage(this.image[0], (this.wh - this.image.width()) / 2, (this.wh - this.image.height()) / 2);
             this.Scale(0.25);
+            this.state = States.Ready;
+            this.btn_rotate.on('click', () => { this.state = States.Rotate; });
+            this.btn_crop.on('click', () => { this.state = States.Crop; });
             this.canvas.on('wheel', (e) => {
+                if (this.state != States.Ready)
+                    return;
                 e.originalEvent.deltaY < 0 ? this.Scale(this.scale * 1.1) : this.Scale(this.scale / 1.1);
             });
             this.canvas.on('mousedown', (e) => {
-                this.mouse_x = e.pageX;
-                // this.mouse_y = e.pageY;
-                this.canvas.on('mousemove.editor', this.Move.bind(this));
-                this.canvas.on('mouseup.editor', () => {
-                    this.canvas.off('mousemove.editor');
-                    this.canvas.off('mouseup.editor');
-                });
+                if (this.state == States.Rotate) {
+                    this.mouse_angle_from = this.angle;
+                    this.mouse_x = e.pageX - this.canvas[0].offsetLeft;
+                    this.mouse_y = e.pageY - this.canvas[0].offsetTop;
+                    this.canvas.on('mousemove.editor', this.Move.bind(this));
+                    this.canvas.on('mouseup.editor', () => {
+                        this.canvas.off('mousemove.editor');
+                        this.canvas.off('mouseup.editor');
+                    });
+                }
             });
         };
         $(document).on('keyup', (e) => { if (e.key == "Escape")
@@ -70,10 +98,21 @@ class Editor {
         this.context.restore();
     }
     Move(e) {
-        let angle = this.angle + e.pageX - this.mouse_x;
-        this.Rotate(angle);
-        this.mouse_x = e.pageX;
-        // this.mouse_y = e.pageY;
+        console.log(this.canvas[0].width, this.canvas[0].height, this.mouse_x, this.mouse_y, e.pageX, e.pageY);
+        let Ax = this.canvas[0].width / 2 - this.mouse_x;
+        let Ay = this.canvas[0].height / 2 - this.mouse_y;
+        let Bx = this.canvas[0].width / 2 - (e.pageX - this.canvas[0].offsetLeft);
+        let By = this.canvas[0].height / 2 - (e.pageY - this.canvas[0].offsetTop);
+        let a = Math.sqrt(Ax * Ax + Ay * Ay);
+        let b = Math.sqrt(Bx * Bx + By * By);
+        let one = Ax * Bx + Ay * By;
+        let two = a * b;
+        let three = Ax * By - Ay * Bx;
+        let cos = one / two;
+        this.mouse_angle = three > 0 ? Math.acos(cos) : -Math.acos(cos);
+        console.log(Ax, Ay, Bx, By, cos, this.mouse_angle / TO_RADIANS);
+        // let angle = this.angle + e.pageX - this.mouse_x;
+        this.Rotate(this.mouse_angle_from + this.mouse_angle / TO_RADIANS);
     }
 }
 //# sourceMappingURL=editor.js.map
