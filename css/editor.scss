@@ -6,7 +6,21 @@ body {
 	//> div { display: inline-block; }
 }
 
+.hide { display: none; }
+
 .container {
 	display: flex; justify-content: center; grid-gap: 1rem; padding: 2rem;
 	.btn { padding: 1rem; background-color: cadetblue; cursor: pointer; }
+	.btn_use { background-color: gray; }
 }
+.canvas { display: inline-block; position: relative; }
+.crop {
+	position: absolute;
+	top: 0; left: 0;
+	background-color: #00000061;
+	//clip-path: circle(200px at 50% 50%);
+	//clip-path: polygon(5% 5%, 95% 5%, 95% 95%, 5% 95%);
+	//clip-path: url("#triangle");
+	//clip-path: polygon(0 0, 0 100%, 20% 100%, 20% 20%, 80% 20%, 80% 80%, 20% 80%, 20% 100%, 100% 100%, 100% 0);
+}
+

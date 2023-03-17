@@ -12,9 +12,10 @@ declare class Editor {
     canvas: JQuery<HTMLCanvasElement>;
     context: CanvasRenderingContext2D;
     image: JQuery<HTMLImageElement>;
-    container: JQuery;
+    btn_container: JQuery;
     btn_rotate: JQuery;
     btn_crop: JQuery;
+    btn_ok: JQuery;
     state: number;
     scale: number;
     wh: number;
@@ -25,9 +26,13 @@ declare class Editor {
     mouse_angle: number;
     mouse_x: number;
     mouse_y: number;
+    crop: [number, number, number, number];
+    polygon: JQuery;
     constructor();
     Scale(scale: number): void;
     Rotate(angle: number): void;
     protected Draw(): void;
     private Move;
+    private DrawPolygon;
+    private UseBtn;
 }

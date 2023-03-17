@@ -3,6 +3,10 @@ body {
   text-align: center;
 }
 
+.hide {
+  display: none;
+}
+
 .container {
   display: flex;
   justify-content: center;
@@ -13,6 +17,21 @@ body {
   padding: 1rem;
   background-color: cadetblue;
   cursor: pointer;
+}
+.container .btn_use {
+  background-color: gray;
+}
+
+.canvas {
+  display: inline-block;
+  position: relative;
+}
+
+.crop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-color: rgba(0, 0, 0, 0.3803921569);
 }
 
 /*# sourceMappingURL=editor.css.map */
