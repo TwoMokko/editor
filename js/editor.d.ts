@@ -15,7 +15,7 @@ declare class Editor {
     btn_container: JQuery;
     btn_rotate: JQuery;
     btn_crop: JQuery;
-    btn_ok: JQuery;
+    btn_scale: JQuery;
     state: number;
     scale: number;
     wh: number;
@@ -28,11 +28,23 @@ declare class Editor {
     mouse_y: number;
     crop: [number, number, number, number];
     polygon: JQuery;
+    pull_container: JQuery;
+    crop_top: JQuery;
+    crop_right: JQuery;
+    crop_bottom: JQuery;
+    crop_left: JQuery;
+    crop_top_left: JQuery;
+    crop_top_right: JQuery;
+    crop_bot_right: JQuery;
+    crop_bot_left: JQuery;
+    crop_y: number;
     constructor();
     Scale(scale: number): void;
     Rotate(angle: number): void;
     protected Draw(): void;
     private Move;
     private DrawPolygon;
+    private DrawPull;
+    private MoveCrop;
     private UseBtn;
 }

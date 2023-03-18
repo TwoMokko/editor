@@ -14,7 +14,7 @@ class Editor {
     btn_container;
     btn_rotate;
     btn_crop;
-    btn_ok;
+    btn_scale;
     state;
     scale;
     wh;
@@ -27,6 +27,16 @@ class Editor {
     mouse_y;
     crop;
     polygon;
+    pull_container;
+    crop_top;
+    crop_right;
+    crop_bottom;
+    crop_left;
+    crop_top_left;
+    crop_top_right;
+    crop_bot_right;
+    crop_bot_left;
+    crop_y;
     constructor() {
         this.state = States.None;
         this.canvas = $('canvas#test');
@@ -37,9 +47,18 @@ class Editor {
         this.btn_container = $('<div/>', { class: 'container' });
         this.btn_rotate = $('<div/>', { class: 'btn' }).text('Повернуть');
         this.btn_crop = $('<div/>', { class: 'btn' }).text('Обрезать');
-        this.btn_ok = $('<div/>', { class: 'btn btn_use' }).text('ОК');
+        this.btn_scale = $('<div/>', { class: 'btn btn_use' }).text('Масштаб');
+        this.pull_container = $('<div/>', { class: 'pull_container' });
+        this.crop_top = $('<div/>', { class: 'crop_top' });
+        this.crop_right = $('<div/>', { class: 'crop_right' });
+        this.crop_bottom = $('<div/>', { class: 'crop_bottom' });
+        this.crop_left = $('<div/>', { class: 'crop_left' });
+        this.crop_top_left = $('<div/>', { class: 'crop_angle1' });
+        this.crop_top_right = $('<div/>', { class: 'crop_angle2' });
+        this.crop_bot_right = $('<div/>', { class: 'crop_angle1' });
+        this.crop_bot_left = $('<div/>', { class: 'crop_angle2' });
         /* Building DOM */
-        $('body').prepend(this.btn_container.append(this.btn_rotate, this.btn_crop, this.btn_ok));
+        $('body').prepend(this.btn_container.append(this.btn_rotate, this.btn_crop, this.btn_scale));
         this.image[0].onload = () => {
             this.width = this.image[0].width;
             this.height = this.image[0].height;
@@ -56,7 +75,7 @@ class Editor {
             return; this.state = States.Rotate; this.UseBtn(); });
         this.btn_crop.on('click', () => { if (this.state == States.None)
             return; this.state = States.Crop; this.UseBtn(); });
-        this.btn_ok.on('click', () => { if (this.state == States.None)
+        this.btn_scale.on('click', () => { if (this.state == States.None)
             return; this.state = States.Ready; this.UseBtn(); });
         this.canvas.on('wheel', (e) => {
             if (this.state != States.Ready)
@@ -75,14 +94,25 @@ class Editor {
                 });
             }
         });
+        this.crop_top.on('mousedown', (e) => {
+            if (this.state == States.Crop) {
+                this.crop_y = e.pageY - this.canvas[0].offsetTop;
+                console.log(this.crop[1] * this.scale, e.pageY, this.crop_y);
+                this.canvas.on('mousemove.editor', this.MoveCrop.bind(this));
+                this.canvas.on('mouseup.editor', () => {
+                    console.log('up');
+                    this.canvas.off('mousemove.editor');
+                    this.canvas.off('mouseup.editor');
+                });
+            }
+        });
         $(document).on('keyup', (e) => { if (this.state != States.Ready)
             return; if (e.key == "Escape")
             this.Rotate(0); });
         this.image[0].src = 'css/pic/2.jpg';
         this.polygon = $('<div/>', { class: 'crop' });
         this.polygon.css({ 'width': this.wh, 'height': this.wh });
-        // this.DrawPolygon();
-        $('.canvas').append(this.polygon);
+        $('.canvas').append(this.polygon, this.pull_container.append(this.crop_top, this.crop_right, this.crop_bottom, this.crop_left, this.crop_top_left, this.crop_top_right, this.crop_bot_right, this.crop_bot_left));
     }
     Scale(scale) {
         this.scale = scale;
@@ -151,7 +181,22 @@ class Editor {
         push('100%', '100%');
         push('100%', '0');
         this.polygon.css({ 'clip-path': `polygon(${pol.join(',')})` });
-        // this.polygon.css({ 'clip-path' : 'polygon(0 0, 0 100%, 20% 100%, 20% 20%, 80% 20%, 80% 80%, 20% 80%, 20% 100%, 100% 100%, 100% 0)' });
+        this.DrawPull();
+    }
+    DrawPull() {
+        this.crop_top.css({ 'width': Math.round(this.scale * (this.wh - 2 * this.crop[0])) + 'px', 'top': Math.round(this.scale * this.crop[1] - 4) + 'px', 'left': Math.round(this.scale * this.crop[0]) + 'px' });
+        this.crop_left.css({ 'height': Math.round(this.scale * (this.wh - 2 * this.crop[1])) + 'px', 'top': Math.round(this.scale * this.crop[1]) + 'px', 'left': Math.round(this.scale * this.crop[0] - 4) + 'px' });
+        this.crop_bottom.css({ 'width': Math.round(this.scale * (this.wh - 2 * this.crop[0])) + 'px', 'top': Math.round(this.scale * this.crop[3]) + 'px', 'left': Math.round(this.scale * this.crop[0]) + 'px' });
+        this.crop_right.css({ 'height': Math.round(this.scale * (this.wh - 2 * this.crop[1])) + 'px', 'top': Math.round(this.scale * this.crop[1]) + 'px', 'right': Math.round(this.scale * this.crop[0] - 4) + 'px' });
+        this.crop_top_left.css({ 'top': Math.round(this.scale * this.crop[1] - 12) + 'px', 'left': Math.round(this.scale * this.crop[0] - 12) + 'px' });
+        this.crop_top_right.css({ 'top': Math.round(this.scale * this.crop[1] - 12) + 'px', 'right': Math.round(this.scale * this.crop[0] - 12) + 'px' });
+        this.crop_bot_right.css({ 'top': Math.round(this.scale * this.crop[3]) + 'px', 'right': Math.round(this.scale * this.crop[0] - 12) + 'px' });
+        this.crop_bot_left.css({ 'top': Math.round(this.scale * this.crop[3]) + 'px', 'left': Math.round(this.scale * this.crop[0] - 12) + 'px' });
+    }
+    MoveCrop(e) {
+        // this.crop[1] = ;
+        console.log();
+        this.DrawPolygon();
     }
     UseBtn() {
         this.btn_container.children('.btn').removeClass('btn_use');
@@ -163,7 +208,7 @@ class Editor {
                 this.btn_crop.addClass('btn_use');
                 break;
             case States.Ready:
-                this.btn_ok.addClass('btn_use');
+                this.btn_scale.addClass('btn_use');
                 break;
         }
     }

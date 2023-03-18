@@ -34,4 +34,40 @@ body {
   background-color: rgba(0, 0, 0, 0.3803921569);
 }
 
+.pull_container .crop_top {
+  position: absolute;
+  height: 4px;
+  border-bottom: 2px solid #525252; /*cursor: n-resize;*/
+}
+.pull_container .crop_right {
+  position: absolute;
+  width: 4px;
+  border-left: 2px solid #525252;
+  cursor: w-resize;
+}
+.pull_container .crop_bottom {
+  position: absolute;
+  height: 4px;
+  border-top: 2px solid #525252;
+  cursor: n-resize;
+}
+.pull_container .crop_left {
+  position: absolute;
+  width: 4px;
+  border-right: 2px solid #525252;
+  cursor: w-resize;
+}
+.pull_container .crop_angle1 {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  cursor: nw-resize;
+}
+.pull_container .crop_angle2 {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  cursor: ne-resize;
+}
+
 /*# sourceMappingURL=editor.css.map */

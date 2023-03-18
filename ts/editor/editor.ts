@@ -8,49 +8,70 @@ enum States {
 }
 
 class Editor {
-	canvas				: JQuery<HTMLCanvasElement>;
-	context				: CanvasRenderingContext2D;
-	image				: JQuery<HTMLImageElement>;
+	canvas						: JQuery<HTMLCanvasElement>;
+	context						: CanvasRenderingContext2D;
+	image						: JQuery<HTMLImageElement>;
 
-	btn_container		: JQuery;
-	btn_rotate			: JQuery;
-	btn_crop			: JQuery;
-	btn_ok				: JQuery;
+	btn_container				: JQuery;
+	btn_rotate					: JQuery;
+	btn_crop					: JQuery;
+	btn_scale					: JQuery;
 
-	state				: number;
-	scale				: number;
-	wh					: number;
-	width				: number;
-	height				: number;
-	angle				: number;
-	mouse_angle_from	: number;
-	mouse_angle			: number;
-	mouse_x				: number;
-	mouse_y				: number;
+	state						: number;
+	scale						: number;
+	wh							: number;
+	width						: number;
+	height						: number;
+	angle						: number;
+	mouse_angle_from			: number;
+	mouse_angle					: number;
+	mouse_x						: number;
+	mouse_y						: number;
 
-	crop				: [number, number, number, number];
+	crop						: [number, number, number, number];
 
-	polygon				:JQuery;
+	polygon						:JQuery;
+	pull_container				:JQuery;
+	crop_top					:JQuery;
+	crop_right					:JQuery;
+	crop_bottom					:JQuery;
+	crop_left					:JQuery;
+	crop_top_left				:JQuery;
+	crop_top_right				:JQuery;
+	crop_bot_right				:JQuery;
+	crop_bot_left				:JQuery;
+	crop_y						: number;
 
 	constructor() {
-		this.state		= States.None;
-		this.canvas		= $('canvas#test');
-		this.context 	= this.canvas[0].getContext('2d');
-		this.angle		= 0;
-		this.image		= $('<img/>', {});
+		this.state				= States.None;
+		this.canvas				= $('canvas#test');
+		this.context 			= this.canvas[0].getContext('2d');
+		this.angle				= 0;
+		this.image				= $('<img/>', {});
 
 		/* Elements */
-		this.btn_container 	= $('<div/>', { class: 'container' });
-		this.btn_rotate = $('<div/>', { class: 'btn' }).text('Повернуть');
-		this.btn_crop 	= $('<div/>', { class: 'btn' }).text('Обрезать');
-		this.btn_ok 	= $('<div/>', { class: 'btn btn_use' }).text('ОК');
+		this.btn_container 		= $('<div/>', { class: 'container' });
+		this.btn_rotate 		= $('<div/>', { class: 'btn' }).text('Повернуть');
+		this.btn_crop 			= $('<div/>', { class: 'btn' }).text('Обрезать');
+		this.btn_scale 			= $('<div/>', { class: 'btn btn_use' }).text('Масштаб');
+
+		this.pull_container 	= $('<div/>', { class: 'pull_container' });
+		this.crop_top 			= $('<div/>', { class: 'crop_top' });
+		this.crop_right 		= $('<div/>', { class: 'crop_right' });
+		this.crop_bottom 		= $('<div/>', { class: 'crop_bottom' });
+		this.crop_left 			= $('<div/>', { class: 'crop_left' });
+		this.crop_top_left 		= $('<div/>', { class: 'crop_angle1' });
+		this.crop_top_right 	= $('<div/>', { class: 'crop_angle2' });
+		this.crop_bot_right 	= $('<div/>', { class: 'crop_angle1' });
+		this.crop_bot_left 		= $('<div/>', { class: 'crop_angle2' });
+
 
 		/* Building DOM */
 		$('body').prepend(
 			this.btn_container.append(
 				this.btn_rotate,
 				this.btn_crop,
-				this.btn_ok
+				this.btn_scale
 			)
 		);
 
@@ -72,7 +93,7 @@ class Editor {
 
 		this.btn_rotate.on('click', () => { if (this.state == States.None) return; this.state = States.Rotate; this.UseBtn(); });
 		this.btn_crop.on('click', () => { if (this.state == States.None) return; this.state = States.Crop; this.UseBtn(); });
-		this.btn_ok.on('click', () => { if (this.state == States.None) return; this.state = States.Ready; this.UseBtn(); });
+		this.btn_scale.on('click', () => { if (this.state == States.None) return; this.state = States.Ready; this.UseBtn(); });
 
 		this.canvas.on('wheel', (e) => {
 			if (this.state != States.Ready) return;
@@ -93,6 +114,20 @@ class Editor {
 				});
 			}
 		});
+		this.crop_top.on('mousedown', (e) => {
+			if (this.state == States.Crop)
+			{
+				this.crop_y = e.pageY - this.canvas[0].offsetTop;
+				console.log(this.crop[1] * this.scale, e.pageY, this.crop_y);
+				this.canvas.on('mousemove.editor', this.MoveCrop.bind(this));
+
+				this.canvas.on('mouseup.editor', () => {
+					console.log('up');
+					this.canvas.off('mousemove.editor');
+					this.canvas.off('mouseup.editor');
+				})
+			}
+		});
 
 		$(document).on('keyup', (e) => { if (this.state != States.Ready) return; if (e.key == "Escape") this.Rotate(0); });
 
@@ -101,9 +136,20 @@ class Editor {
 
 		this.polygon = $('<div/>', { class: 'crop' });
 		this.polygon.css({ 'width': this.wh, 'height': this.wh});
-		// this.DrawPolygon();
 
-		$('.canvas').append(this.polygon);
+		$('.canvas').append(
+			this.polygon,
+			this.pull_container.append(
+				this.crop_top,
+				this.crop_right,
+				this.crop_bottom,
+				this.crop_left,
+				this.crop_top_left,
+				this.crop_top_right,
+				this.crop_bot_right,
+				this.crop_bot_left
+			)
+		);
 	}
 
 	public Scale(scale: number)
@@ -177,8 +223,8 @@ class Editor {
 	// 	return [x * ca - y * sa, x * sa + y * ca];
 	// }
 
-	private DrawPolygon() {
-
+	private DrawPolygon()
+	{
 		let pol = [];
 		const push = (x: string|number, y: string|number) => { pol.push(`${x} ${y}`); };
 		push(0,0);
@@ -193,7 +239,24 @@ class Editor {
 		push('100%','0');
 		this.polygon.css({ 'clip-path' : `polygon(${pol.join(',')})` });
 
-		// this.polygon.css({ 'clip-path' : 'polygon(0 0, 0 100%, 20% 100%, 20% 20%, 80% 20%, 80% 80%, 20% 80%, 20% 100%, 100% 100%, 100% 0)' });
+		this.DrawPull();
+	}
+
+	private DrawPull() {
+		this.crop_top.css({ 'width': Math.round(this.scale * (this.wh - 2 * this.crop[0])) + 'px', 'top': Math.round(this.scale * this.crop[1] - 4) + 'px', 'left': Math.round(this.scale * this.crop[0]) + 'px'});
+		this.crop_left.css({ 'height': Math.round(this.scale * (this.wh - 2 * this.crop[1])) + 'px', 'top': Math.round(this.scale * this.crop[1]) + 'px', 'left': Math.round(this.scale * this.crop[0] - 4) + 'px'});
+		this.crop_bottom.css({ 'width': Math.round(this.scale * (this.wh - 2 * this.crop[0])) + 'px', 'top': Math.round(this.scale * this.crop[3]) + 'px', 'left': Math.round(this.scale * this.crop[0]) + 'px'});
+		this.crop_right.css({ 'height': Math.round(this.scale * (this.wh - 2 * this.crop[1])) + 'px', 'top': Math.round(this.scale * this.crop[1]) + 'px', 'right': Math.round(this.scale * this.crop[0] - 4) + 'px'});
+		this.crop_top_left.css({ 'top': Math.round(this.scale * this.crop[1] - 12) + 'px', 'left': Math.round(this.scale * this.crop[0] - 12) + 'px'});
+		this.crop_top_right.css({ 'top': Math.round(this.scale * this.crop[1] - 12) + 'px', 'right': Math.round(this.scale * this.crop[0] - 12) + 'px'});
+		this.crop_bot_right.css({ 'top': Math.round(this.scale * this.crop[3]) + 'px', 'right': Math.round(this.scale * this.crop[0] - 12) + 'px'});
+		this.crop_bot_left.css({ 'top': Math.round(this.scale * this.crop[3]) + 'px', 'left': Math.round(this.scale * this.crop[0] - 12) + 'px'});
+	}
+
+	private MoveCrop(e) {
+		// this.crop[1] = ;
+		console.log();
+		this.DrawPolygon();
 	}
 
  	private UseBtn() {
@@ -201,10 +264,9 @@ class Editor {
 		switch (this.state) {
 			case States.Rotate: this.btn_rotate.addClass('btn_use'); break;
 			case States.Crop: this.btn_crop.addClass('btn_use'); break;
-			case States.Ready: this.btn_ok.addClass('btn_use'); break;
+			case States.Ready: this.btn_scale.addClass('btn_use'); break;
 		}
 	}
-
 }
 
 
