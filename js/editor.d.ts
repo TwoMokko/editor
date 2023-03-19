@@ -1,6 +1,7 @@
 /// <reference types="jquery" />
 /// <reference types="jquery" />
 /// <reference types="jqueryui" />
+import MouseMoveEvent = JQuery.MouseMoveEvent;
 declare const TO_RADIANS: number;
 declare enum States {
     None = 0,
@@ -27,24 +28,23 @@ declare class Editor {
     mouse_x: number;
     mouse_y: number;
     crop: [number, number, number, number];
-    polygon: JQuery;
-    pull_container: JQuery;
-    crop_top: JQuery;
-    crop_right: JQuery;
-    crop_bottom: JQuery;
-    crop_left: JQuery;
-    crop_top_left: JQuery;
-    crop_top_right: JQuery;
-    crop_bot_right: JQuery;
-    crop_bot_left: JQuery;
-    crop_y: number;
+    crop_background: JQuery;
+    crop_container: JQuery;
+    crop_boxes: {
+        top: JQuery;
+        right: JQuery;
+        bottom: JQuery;
+        left: JQuery;
+        top_left: JQuery;
+        top_right: JQuery;
+        bot_right: JQuery;
+        bot_left: JQuery;
+    };
     constructor();
     Scale(scale: number): void;
     Rotate(angle: number): void;
     protected Draw(): void;
     private Move;
     private DrawPolygon;
-    private DrawPull;
-    private MoveCrop;
     private UseBtn;
 }

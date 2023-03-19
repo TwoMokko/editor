@@ -7,67 +7,70 @@ body {
   display: none;
 }
 
-.container {
+div.container {
   display: flex;
   justify-content: center;
   grid-gap: 1rem;
   padding: 2rem;
 }
-.container .btn {
+div.container .btn {
   padding: 1rem;
   background-color: cadetblue;
   cursor: pointer;
 }
-.container .btn_use {
+div.container .btn_use {
   background-color: gray;
 }
 
-.canvas {
+div.canvas {
   display: inline-block;
   position: relative;
 }
 
-.crop {
+div.crop_background {
   position: absolute;
   top: 0;
   left: 0;
   background-color: rgba(0, 0, 0, 0.3803921569);
 }
 
-.pull_container .crop_top {
+div.crop_container {
   position: absolute;
-  height: 4px;
-  border-bottom: 2px solid #525252; /*cursor: n-resize;*/
+  top: 0;
+  left: 0;
 }
-.pull_container .crop_right {
+div.crop_container > div {
   position: absolute;
-  width: 4px;
-  border-left: 2px solid #525252;
-  cursor: w-resize;
+  display: none;
 }
-.pull_container .crop_bottom {
-  position: absolute;
-  height: 4px;
-  border-top: 2px solid #525252;
+div.crop_container > div.top {
+  height: 8px;
   cursor: n-resize;
 }
-.pull_container .crop_left {
-  position: absolute;
-  width: 4px;
-  border-right: 2px solid #525252;
+div.crop_container > div.right {
+  width: 8px;
   cursor: w-resize;
 }
-.pull_container .crop_angle1 {
-  position: absolute;
-  width: 12px;
-  height: 12px;
+div.crop_container > div.bottom {
+  height: 8px;
+  cursor: n-resize;
+}
+div.crop_container > div.left {
+  width: 8px;
+  cursor: w-resize;
+}
+div.crop_container > div.angle1 {
+  width: 8px;
+  height: 8px;
   cursor: nw-resize;
 }
-.pull_container .crop_angle2 {
-  position: absolute;
-  width: 12px;
-  height: 12px;
+div.crop_container > div.angle2 {
+  width: 8px;
+  height: 8px;
   cursor: ne-resize;
+}
+div.crop_container.act > div {
+  display: block;
 }
 
 /*# sourceMappingURL=editor.css.map */

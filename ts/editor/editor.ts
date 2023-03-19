@@ -1,3 +1,5 @@
+import MouseMoveEvent = JQuery.MouseMoveEvent;
+
 const TO_RADIANS = Math.PI/180;
 
 enum States {
@@ -30,17 +32,18 @@ class Editor {
 
 	crop						: [number, number, number, number];
 
-	polygon						:JQuery;
-	pull_container				:JQuery;
-	crop_top					:JQuery;
-	crop_right					:JQuery;
-	crop_bottom					:JQuery;
-	crop_left					:JQuery;
-	crop_top_left				:JQuery;
-	crop_top_right				:JQuery;
-	crop_bot_right				:JQuery;
-	crop_bot_left				:JQuery;
-	crop_y						: number;
+	crop_background				: JQuery;
+	crop_container				: JQuery;
+	crop_boxes					: {
+		top						: JQuery;
+		right					: JQuery;
+		bottom					: JQuery;
+		left					: JQuery;
+		top_left				: JQuery;
+		top_right				: JQuery;
+		bot_right				: JQuery;
+		bot_left				: JQuery;
+	}
 
 	constructor() {
 		this.state				= States.None;
@@ -55,16 +58,21 @@ class Editor {
 		this.btn_crop 			= $('<div/>', { class: 'btn' }).text('Обрезать');
 		this.btn_scale 			= $('<div/>', { class: 'btn btn_use' }).text('Масштаб');
 
-		this.pull_container 	= $('<div/>', { class: 'pull_container' });
-		this.crop_top 			= $('<div/>', { class: 'crop_top' });
-		this.crop_right 		= $('<div/>', { class: 'crop_right' });
-		this.crop_bottom 		= $('<div/>', { class: 'crop_bottom' });
-		this.crop_left 			= $('<div/>', { class: 'crop_left' });
-		this.crop_top_left 		= $('<div/>', { class: 'crop_angle1' });
-		this.crop_top_right 	= $('<div/>', { class: 'crop_angle2' });
-		this.crop_bot_right 	= $('<div/>', { class: 'crop_angle1' });
-		this.crop_bot_left 		= $('<div/>', { class: 'crop_angle2' });
+		const canvas = $('div.canvas');
+		this.crop_background = $('<div/>', { class: 'crop_background' }).appendTo(canvas);
+		this.crop_background.css({ 'width': this.wh, 'height': this.wh});
 
+		this.crop_container 	= $('<div/>', { class: 'crop_container' }).appendTo(canvas);
+		this.crop_boxes = {
+			top 		: $('<div/>', { class: 'top' }).appendTo(this.crop_container),
+			right 		: $('<div/>', { class: 'right' }).appendTo(this.crop_container),
+			bottom 		: $('<div/>', { class: 'bottom' }).appendTo(this.crop_container),
+			left 		: $('<div/>', { class: 'left' }).appendTo(this.crop_container),
+			top_left 	: $('<div/>', { class: 'angle1' }).appendTo(this.crop_container),
+			top_right 	: $('<div/>', { class: 'angle2' }).appendTo(this.crop_container),
+			bot_right 	: $('<div/>', { class: 'angle1' }).appendTo(this.crop_container),
+			bot_left 	: $('<div/>', { class: 'angle2' }).appendTo(this.crop_container),
+		}
 
 		/* Building DOM */
 		$('body').prepend(
@@ -95,71 +103,75 @@ class Editor {
 		this.btn_crop.on('click', () => { if (this.state == States.None) return; this.state = States.Crop; this.UseBtn(); });
 		this.btn_scale.on('click', () => { if (this.state == States.None) return; this.state = States.Ready; this.UseBtn(); });
 
-		this.canvas.on('wheel', (e) => {
+		canvas.on('wheel', (e) => {
 			if (this.state != States.Ready) return;
 			(e.originalEvent as WheelEvent).deltaY < 0 ? this.Scale(this.scale * 1.1) : this.Scale( this.scale / 1.1);
 		});
 
-		this.canvas.on('mousedown', (e) => {
+		canvas.on('mousedown', (e) => {
 			if (this.state == States.Rotate)
 			{
 				this.mouse_angle_from = this.angle;
 				this.mouse_x = e.pageX - this.canvas[0].offsetLeft;
 				this.mouse_y = e.pageY - this.canvas[0].offsetTop;
-				this.canvas.on('mousemove.editor', this.Move.bind(this));
+				canvas.on('mousemove.editor', this.Move.bind(this));
 
-				this.canvas.on('mouseup.editor', () => {
-					this.canvas.off('mousemove.editor');
-					this.canvas.off('mouseup.editor');
+				canvas.on('mouseup.editor', () => {
+					canvas.off('mousemove.editor');
+					canvas.off('mouseup.editor');
 				});
-			}
-		});
-		this.crop_top.on('mousedown', (e) => {
-			if (this.state == States.Crop)
-			{
-				this.crop_y = e.pageY - this.canvas[0].offsetTop;
-				console.log(this.crop[1] * this.scale, e.pageY, this.crop_y);
-				this.canvas.on('mousemove.editor', this.MoveCrop.bind(this));
-
-				this.canvas.on('mouseup.editor', () => {
-					console.log('up');
-					this.canvas.off('mousemove.editor');
-					this.canvas.off('mouseup.editor');
-				})
 			}
 		});
 
 		$(document).on('keyup', (e) => { if (this.state != States.Ready) return; if (e.key == "Escape") this.Rotate(0); });
-
 		this.image[0].src = 'css/pic/2.jpg';
 
+		const cropMove = (a: number, b: number, e, box: {left ?: number, right ?: number, top ?: number, bottom ?: number}) => {
+			if (this.state == States.Crop)
+			{
+				const _crop_x = this.crop[a ?? 0];
+				const _crop_y = this.crop[b ?? 0];
+				const _x = e.pageX;
+				const _y = e.pageY;
+				canvas.on('mousemove.editor', e => {
+					if (a !== null)
+					{
+						this.crop[a] = _crop_x + Math.round((e.pageX - _x) / this.scale);
+						if (box.left !== null && this.crop[a] < box.left) this.crop[a] = box.left;
+						if (box.right  !== null && this.crop[a] > box.right) this.crop[a] = box.right;
+					}
+					if (b !== null)
+					{
+						this.crop[b] = _crop_y + Math.round((e.pageY - _y) / this.scale);
+						if (box.top !== null && this.crop[b] < box.top) this.crop[b] = box.top;
+						if (box.bottom  !== null && this.crop[b] > box.bottom) this.crop[b] = box.bottom;
+					}
+					this.DrawPolygon();
+				});
+				canvas.on('mouseup.editor', () => { canvas.off('mousemove.editor'); canvas.off('mouseup.editor'); })
+			}
+		};
 
-		this.polygon = $('<div/>', { class: 'crop' });
-		this.polygon.css({ 'width': this.wh, 'height': this.wh});
-
-		$('.canvas').append(
-			this.polygon,
-			this.pull_container.append(
-				this.crop_top,
-				this.crop_right,
-				this.crop_bottom,
-				this.crop_left,
-				this.crop_top_left,
-				this.crop_top_right,
-				this.crop_bot_right,
-				this.crop_bot_left
-			)
-		);
+		this.crop_boxes.top.on('mousedown', e => { cropMove(null, 1, e, {top: 0, bottom: this.crop[3]}); });
+		this.crop_boxes.bottom.on('mousedown', e => { cropMove(null, 3, e, {top: this.crop[1], bottom: this.wh}); });
+		this.crop_boxes.left.on('mousedown', e => { cropMove(0, null, e, {left: 0, right: this.crop[2]}); });
+		this.crop_boxes.right.on('mousedown', e => { cropMove(2, null, e, {left: this.crop[0], right: this.wh}); });
+		this.crop_boxes.top_left.on('mousedown', e => { cropMove(0, 1, e, {left: 0, right: this.crop[2], top: 0, bottom: this.crop[3]}); });
+		this.crop_boxes.top_right.on('mousedown', e => { cropMove(2, 1, e, {left: this.crop[0], right: this.wh, top: 0, bottom: this.crop[3]}); });
+		this.crop_boxes.bot_left.on('mousedown', e => { cropMove(0, 3, e, {left: 0, right: this.crop[2], top: this.crop[1], bottom: this.wh}); });
+		this.crop_boxes.bot_right.on('mousedown', e => { cropMove(2, 3, e, {left: this.crop[0], right: this.wh, top: this.crop[1], bottom: this.wh}); });
 	}
 
 	public Scale(scale: number)
 	{
 		this.scale = scale;
+		const whs = Math.round(this.scale * this.wh);
 
-		this.canvas[0].width = this.wh * this.scale;
-		this.canvas[0].height = this.wh * this.scale;
+		this.canvas[0].width = whs;
+		this.canvas[0].height = whs;
 
-		this.polygon.css({ 'width': this.wh * this.scale, 'height': this.wh * this.scale });
+		this.crop_background.css({ 'width': whs, 'height': whs});
+		this.crop_container.css({ 'width': whs, 'height': whs});
 		this.context.scale(this.scale, this.scale);
 
 		// this.crop = [
@@ -226,44 +238,44 @@ class Editor {
 	private DrawPolygon()
 	{
 		let pol = [];
+
+		const whs = Math.round(this.scale * this.wh);
+		const left = Math.round(this.scale * this.crop[0]);
+		const right = Math.round(this.scale * this.crop[2]);
+		const top = Math.round(this.scale * this.crop[1]);
+		const bottom = Math.round(this.scale * this.crop[3]);
+		const space = 4;
+
 		const push = (x: string|number, y: string|number) => { pol.push(`${x} ${y}`); };
 		push(0,0);
 		push(0,'100%');
-		push(Math.round(this.scale * this.crop[0]) + 'px','100%');
-		push(Math.round(this.scale * this.crop[0]) + 'px', Math.round(this.scale * this.crop[1]) + 'px');
-		push(Math.round(this.scale * this.crop[2]) + 'px', Math.round(this.scale * this.crop[1]) + 'px');
-		push(Math.round(this.scale * this.crop[2]) + 'px', Math.round(this.scale * this.crop[3]) + 'px');
-		push(Math.round(this.scale * this.crop[0]) + 'px', Math.round(this.scale * this.crop[3]) + 'px');
-		push(Math.round(this.scale * this.crop[0]) + 'px','100%');
+		push(left + 'px','100%');
+		push(left + 'px',  top + 'px');
+		push(right + 'px', top + 'px');
+		push(right + 'px', bottom + 'px');
+		push(left + 'px',  bottom + 'px');
+		push(left + 'px','100%');
 		push('100%','100%');
 		push('100%','0');
-		this.polygon.css({ 'clip-path' : `polygon(${pol.join(',')})` });
+		this.crop_background.css({ 'clip-path' : `polygon(${pol.join(',')})` });
 
-		this.DrawPull();
-	}
+		this.crop_boxes.top.css(		{ 'top': (top - space) + 'px', 'left': (left + space) + 'px', 'right': (whs - right + space) + 'px'});
+		this.crop_boxes.bottom.css(		{ 'top': (bottom - space) + 'px', 'left': (left + space) + 'px', 'right': (whs - right + space) + 'px'});
+		this.crop_boxes.left.css(		{ 'top': (top + space) + 'px', 'left': (left - space) + 'px', 'bottom': (whs - bottom + space) + 'px'});
+		this.crop_boxes.right.css(		{ 'top': (top + space) + 'px', 'right': (whs - right - space) + 'px', 'bottom': (whs - bottom + space) + 'px'});
 
-	private DrawPull() {
-		this.crop_top.css({ 'width': Math.round(this.scale * (this.wh - 2 * this.crop[0])) + 'px', 'top': Math.round(this.scale * this.crop[1] - 4) + 'px', 'left': Math.round(this.scale * this.crop[0]) + 'px'});
-		this.crop_left.css({ 'height': Math.round(this.scale * (this.wh - 2 * this.crop[1])) + 'px', 'top': Math.round(this.scale * this.crop[1]) + 'px', 'left': Math.round(this.scale * this.crop[0] - 4) + 'px'});
-		this.crop_bottom.css({ 'width': Math.round(this.scale * (this.wh - 2 * this.crop[0])) + 'px', 'top': Math.round(this.scale * this.crop[3]) + 'px', 'left': Math.round(this.scale * this.crop[0]) + 'px'});
-		this.crop_right.css({ 'height': Math.round(this.scale * (this.wh - 2 * this.crop[1])) + 'px', 'top': Math.round(this.scale * this.crop[1]) + 'px', 'right': Math.round(this.scale * this.crop[0] - 4) + 'px'});
-		this.crop_top_left.css({ 'top': Math.round(this.scale * this.crop[1] - 12) + 'px', 'left': Math.round(this.scale * this.crop[0] - 12) + 'px'});
-		this.crop_top_right.css({ 'top': Math.round(this.scale * this.crop[1] - 12) + 'px', 'right': Math.round(this.scale * this.crop[0] - 12) + 'px'});
-		this.crop_bot_right.css({ 'top': Math.round(this.scale * this.crop[3]) + 'px', 'right': Math.round(this.scale * this.crop[0] - 12) + 'px'});
-		this.crop_bot_left.css({ 'top': Math.round(this.scale * this.crop[3]) + 'px', 'left': Math.round(this.scale * this.crop[0] - 12) + 'px'});
-	}
-
-	private MoveCrop(e) {
-		// this.crop[1] = ;
-		console.log();
-		this.DrawPolygon();
+		this.crop_boxes.top_left.css(	{ 'top': (top - space) + 'px', 'left': (left - space) + 'px'});
+		this.crop_boxes.top_right.css(	{ 'top': (top - space) + 'px', 'right': (whs - right - space) + 'px'});
+		this.crop_boxes.bot_left.css(	{ 'top': (bottom - space) + 'px', 'left': (left - space) + 'px'});
+		this.crop_boxes.bot_right.css(	{ 'top': (bottom - space) + 'px', 'right': (whs - right - space) + 'px'});
 	}
 
  	private UseBtn() {
+		this.crop_container.removeClass('act');
 		this.btn_container.children('.btn').removeClass('btn_use');
 		switch (this.state) {
 			case States.Rotate: this.btn_rotate.addClass('btn_use'); break;
-			case States.Crop: this.btn_crop.addClass('btn_use'); break;
+			case States.Crop: { this.btn_crop.addClass('btn_use'); this.crop_container.addClass('act'); } break;
 			case States.Ready: this.btn_scale.addClass('btn_use'); break;
 		}
 	}
