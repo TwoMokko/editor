@@ -15,16 +15,21 @@ class Editor {
     btn_rotate;
     btn_crop;
     btn_scale;
+    btn_reset;
     state;
     scale;
+    scale_x;
+    scale_y;
     wh;
     width;
     height;
+    carry_x;
+    carry_y;
     angle;
     mouse_angle_from;
     mouse_angle;
-    mouse_x;
-    mouse_y;
+    rotate_x;
+    rotate_y;
     crop;
     crop_background;
     crop_container;
@@ -34,12 +39,17 @@ class Editor {
         this.canvas = $('canvas#test');
         this.context = this.canvas[0].getContext('2d');
         this.angle = 0;
+        this.carry_x = 0;
+        this.carry_y = 0;
+        this.scale_x = 0;
+        this.scale_y = 0;
         this.image = $('<img/>', {});
         /* Elements */
         this.btn_container = $('<div/>', { class: 'container' });
         this.btn_rotate = $('<div/>', { class: 'btn' }).text('Повернуть');
         this.btn_crop = $('<div/>', { class: 'btn' }).text('Обрезать');
         this.btn_scale = $('<div/>', { class: 'btn btn_use' }).text('Масштаб');
+        this.btn_reset = $('<div/>', { class: 'btn' }).text('Сбросить ЭТО').css({ 'background-color': '#4CAF50' });
         const canvas = $('div.canvas');
         this.crop_background = $('<div/>', { class: 'crop_background' }).appendTo(canvas);
         this.crop_background.css({ 'width': this.wh, 'height': this.wh });
@@ -49,13 +59,13 @@ class Editor {
             right: $('<div/>', { class: 'right' }).appendTo(this.crop_container),
             bottom: $('<div/>', { class: 'bottom' }).appendTo(this.crop_container),
             left: $('<div/>', { class: 'left' }).appendTo(this.crop_container),
-            top_left: $('<div/>', { class: 'angle1' }).appendTo(this.crop_container),
-            top_right: $('<div/>', { class: 'angle2' }).appendTo(this.crop_container),
-            bot_right: $('<div/>', { class: 'angle1' }).appendTo(this.crop_container),
-            bot_left: $('<div/>', { class: 'angle2' }).appendTo(this.crop_container),
+            top_left: $('<div/>', { class: 'angle_nw' }).appendTo(this.crop_container),
+            top_right: $('<div/>', { class: 'angle_ne' }).appendTo(this.crop_container),
+            bot_right: $('<div/>', { class: 'angle_nw' }).appendTo(this.crop_container),
+            bot_left: $('<div/>', { class: 'angle_ne' }).appendTo(this.crop_container),
         };
         /* Building DOM */
-        $('body').prepend(this.btn_container.append(this.btn_rotate, this.btn_crop, this.btn_scale));
+        $('body').prepend(this.btn_container.append(this.btn_rotate, this.btn_crop, this.btn_scale, this.btn_reset));
         this.image[0].onload = () => {
             this.width = this.image[0].width;
             this.height = this.image[0].height;
@@ -74,28 +84,83 @@ class Editor {
             return; this.state = States.Crop; this.UseBtn(); });
         this.btn_scale.on('click', () => { if (this.state == States.None)
             return; this.state = States.Ready; this.UseBtn(); });
+        this.btn_reset.on('click', () => { if (this.state != States.Ready)
+            return;
+        else {
+            this.Scale(0.25);
+            this.carry_x = 0;
+            this.carry_y = 0;
+            this.Draw();
+        } });
+        this.btn_reset.on('click', () => { if (this.state != States.Rotate)
+            return;
+        else {
+            this.Rotate(0);
+        } });
+        this.btn_reset.on('click', () => {
+            if (this.state != States.Crop)
+                return;
+            else {
+                this.crop = [
+                    (this.wh - this.width) / 2, (this.wh - this.height) / 2,
+                    (this.wh + this.width) / 2, (this.wh + this.height) / 2
+                ];
+                this.DrawPolygon();
+            }
+        });
+        // $(document).on('keyup', (e) => { if (this.state != States.Ready) return; if (e.key == "Escape") { this.Scale(0.25); this.x = 0; this.y = 0; this.Draw(); } });
+        // $(document).on('keyup', (e) => { if (this.state != States.Rotate) return; if (e.key == "Escape") this.Rotate(0); });
+        // $(document).on('keyup', (e) => {
+        // 		if (this.state != States.Crop) return; if (e.key == "Escape") {
+        //
+        // 			this.crop = [
+        // 				(this.wh - this.width) / 2, (this.wh - this.height) / 2,
+        // 				(this.wh + this.width) / 2, (this.wh + this.height) / 2
+        // 			]; }
+        //
+        // 		this.DrawPolygon();
+        // 	}
+        // );
+        this.image[0].src = 'css/pic/2.jpg';
         canvas.on('wheel', (e) => {
             if (this.state != States.Ready)
                 return;
+            // const _x = (e.offsetX - this.scale_x) / this.scale;
+            // const _y = (e.offsetY - this.scale_y) / this.scale;
+            console.log(e.offsetX, e.offsetY);
+            // this.context.translate(e.offsetX, e.offsetY);
             e.originalEvent.deltaY < 0 ? this.Scale(this.scale * 1.1) : this.Scale(this.scale / 1.1);
+            // this.scale_x = (e.offsetX - _x) * this.scale;
+            // this.scale_y = (e.offsetX - _y) * this.scale;
         });
         canvas.on('mousedown', (e) => {
             if (this.state == States.Rotate) {
                 this.mouse_angle_from = this.angle;
-                this.mouse_x = e.pageX - this.canvas[0].offsetLeft;
-                this.mouse_y = e.pageY - this.canvas[0].offsetTop;
+                this.rotate_x = e.pageX - this.canvas[0].offsetLeft;
+                this.rotate_y = e.pageY - this.canvas[0].offsetTop;
                 canvas.on('mousemove.editor', this.Move.bind(this));
                 canvas.on('mouseup.editor', () => {
                     canvas.off('mousemove.editor');
                     canvas.off('mouseup.editor');
                 });
             }
+            if (this.state == States.Ready) {
+                const _from_x = this.carry_x;
+                const _from_y = this.carry_y;
+                const _x = e.pageX;
+                const _y = e.pageY;
+                canvas.on('mousemove.editor', (e) => {
+                    this.carry_x = _from_x + (e.pageX - _x) / this.scale;
+                    this.carry_y = _from_y + (e.pageY - _y) / this.scale;
+                    this.Draw();
+                });
+                canvas.on('mouseup.editor', () => {
+                    canvas.off('mousemove.editor');
+                    canvas.off('mouseup.editor');
+                });
+            }
         });
-        $(document).on('keyup', (e) => { if (this.state != States.Ready)
-            return; if (e.key == "Escape")
-            this.Rotate(0); });
-        this.image[0].src = 'css/pic/2.jpg';
-        const cropMove = (a, b, e, box) => {
+        const CropMove = (a, b, e, box) => {
             if (this.state == States.Crop) {
                 const _crop_x = this.crop[a ?? 0];
                 const _crop_y = this.crop[b ?? 0];
@@ -121,14 +186,14 @@ class Editor {
                 canvas.on('mouseup.editor', () => { canvas.off('mousemove.editor'); canvas.off('mouseup.editor'); });
             }
         };
-        this.crop_boxes.top.on('mousedown', e => { cropMove(null, 1, e, { top: 0, bottom: this.crop[3] }); });
-        this.crop_boxes.bottom.on('mousedown', e => { cropMove(null, 3, e, { top: this.crop[1], bottom: this.wh }); });
-        this.crop_boxes.left.on('mousedown', e => { cropMove(0, null, e, { left: 0, right: this.crop[2] }); });
-        this.crop_boxes.right.on('mousedown', e => { cropMove(2, null, e, { left: this.crop[0], right: this.wh }); });
-        this.crop_boxes.top_left.on('mousedown', e => { cropMove(0, 1, e, { left: 0, right: this.crop[2], top: 0, bottom: this.crop[3] }); });
-        this.crop_boxes.top_right.on('mousedown', e => { cropMove(2, 1, e, { left: this.crop[0], right: this.wh, top: 0, bottom: this.crop[3] }); });
-        this.crop_boxes.bot_left.on('mousedown', e => { cropMove(0, 3, e, { left: 0, right: this.crop[2], top: this.crop[1], bottom: this.wh }); });
-        this.crop_boxes.bot_right.on('mousedown', e => { cropMove(2, 3, e, { left: this.crop[0], right: this.wh, top: this.crop[1], bottom: this.wh }); });
+        this.crop_boxes.top.on('mousedown', e => { CropMove(null, 1, e, { top: 0, bottom: this.crop[3] }); });
+        this.crop_boxes.bottom.on('mousedown', e => { CropMove(null, 3, e, { top: this.crop[1], bottom: this.wh }); });
+        this.crop_boxes.left.on('mousedown', e => { CropMove(0, null, e, { left: 0, right: this.crop[2] }); });
+        this.crop_boxes.right.on('mousedown', e => { CropMove(2, null, e, { left: this.crop[0], right: this.wh }); });
+        this.crop_boxes.top_left.on('mousedown', e => { CropMove(0, 1, e, { left: 0, right: this.crop[2], top: 0, bottom: this.crop[3] }); });
+        this.crop_boxes.top_right.on('mousedown', e => { CropMove(2, 1, e, { left: this.crop[0], right: this.wh, top: 0, bottom: this.crop[3] }); });
+        this.crop_boxes.bot_left.on('mousedown', e => { CropMove(0, 3, e, { left: 0, right: this.crop[2], top: this.crop[1], bottom: this.wh }); });
+        this.crop_boxes.bot_right.on('mousedown', e => { CropMove(2, 3, e, { left: this.crop[0], right: this.wh, top: this.crop[1], bottom: this.wh }); });
     }
     Scale(scale) {
         this.scale = scale;
@@ -158,17 +223,17 @@ class Editor {
     Draw() {
         this.context.clearRect(0, 0, this.wh, this.wh);
         this.context.save();
-        this.context.translate(this.wh / 2, this.wh / 2);
+        this.context.translate(this.wh / 2 + this.carry_x, this.wh / 2 + this.carry_y);
         this.context.rotate(this.angle * TO_RADIANS);
         this.context.drawImage(this.image[0], -this.width / 2, -this.height / 2);
         this.context.restore();
         this.DrawPolygon();
     }
     Move(e) {
-        let Ax = this.canvas[0].width / 2 - this.mouse_x;
-        let Ay = this.canvas[0].height / 2 - this.mouse_y;
-        let Bx = this.canvas[0].width / 2 - (e.pageX - this.canvas[0].offsetLeft);
-        let By = this.canvas[0].height / 2 - (e.pageY - this.canvas[0].offsetTop);
+        let Ax = (this.wh / 2 + this.carry_x) * this.scale - this.rotate_x;
+        let Ay = (this.wh / 2 + this.carry_y) * this.scale - this.rotate_y;
+        let Bx = (this.wh / 2 + this.carry_x) * this.scale - (e.pageX - this.canvas[0].offsetLeft);
+        let By = (this.wh / 2 + this.carry_y) * this.scale - (e.pageY - this.canvas[0].offsetTop);
         let a = Math.sqrt(Ax * Ax + Ay * Ay);
         let b = Math.sqrt(Bx * Bx + By * By);
         let one = Ax * Bx + Ay * By;

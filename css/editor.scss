@@ -33,8 +33,8 @@ div.crop_container {
 		&.right { width: 8px; cursor: w-resize; }
 		&.bottom { height: 8px; cursor: n-resize; }
 		&.left { width: 8px; cursor: w-resize; }
-		&.angle1 { width: 8px; height: 8px; cursor: nw-resize; }
-		&.angle2 { width: 8px; height: 8px; cursor: ne-resize; }
+		&.angle_nw { width: 8px; height: 8px; cursor: nw-resize; }
+		&.angle_ne { width: 8px; height: 8px; cursor: ne-resize; }
 	}
 	&.act { > div { display: block; } }
 }

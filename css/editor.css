@@ -59,12 +59,12 @@ div.crop_container > div.left {
   width: 8px;
   cursor: w-resize;
 }
-div.crop_container > div.angle1 {
+div.crop_container > div.angle_nw {
   width: 8px;
   height: 8px;
   cursor: nw-resize;
 }
-div.crop_container > div.angle2 {
+div.crop_container > div.angle_ne {
   width: 8px;
   height: 8px;
   cursor: ne-resize;
