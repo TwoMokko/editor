@@ -14,7 +14,7 @@ div.container {
 	.btn_use { background-color: gray; }
 }
 
-div.canvas { display: inline-block; position: relative; }
+div.canvas { display: inline-block; position: relative; overflow: hidden; width: 800px; height: 800px; }
 
 div.crop_background {
 	position: absolute; top: 0; left: 0;

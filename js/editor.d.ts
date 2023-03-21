@@ -7,21 +7,22 @@ declare enum States {
     None = 0,
     Ready = 1,
     Crop = 2,
-    Rotate = 3
+    Rotate = 3,
+    Blur = 4
 }
 declare class Editor {
     canvas: JQuery<HTMLCanvasElement>;
     context: CanvasRenderingContext2D;
     image: JQuery<HTMLImageElement>;
+    canvas_container: JQuery;
     btn_container: JQuery;
     btn_rotate: JQuery;
     btn_crop: JQuery;
+    btn_blur: JQuery;
     btn_scale: JQuery;
     btn_reset: JQuery;
     state: number;
     scale: number;
-    scale_x: number;
-    scale_y: number;
     wh: number;
     width: number;
     height: number;
@@ -46,7 +47,7 @@ declare class Editor {
         bot_left: JQuery;
     };
     constructor();
-    Scale(scale: number): void;
+    Scale(scale: number, px: number, py: number, dx: number, dy: number): void;
     Rotate(angle: number): void;
     protected Draw(): void;
     private Move;

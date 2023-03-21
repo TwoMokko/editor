@@ -25,6 +25,9 @@ div.container .btn_use {
 div.canvas {
   display: inline-block;
   position: relative;
+  overflow: hidden;
+  width: 800px;
+  height: 800px;
 }
 
 div.crop_background {
