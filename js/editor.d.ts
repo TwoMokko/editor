@@ -52,5 +52,6 @@ declare class Editor {
     protected Draw(): void;
     private Move;
     private DrawPolygon;
+    private Blur;
     private UseBtn;
 }

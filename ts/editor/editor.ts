@@ -203,6 +203,12 @@ class Editor {
 				});
 			}
 
+			if (this.state == States.Blur)
+			{
+				console.log(e.offsetX, e.offsetY);
+				this.Blur(e.offsetX, e.offsetY);
+			}
+
 			if (this.state == States.Crop)
 			{
 				const _crop_l = this.crop[0];
@@ -378,8 +384,23 @@ class Editor {
 		this.crop_boxes.bot_right.css(	{ 'top': (bottom - space) + 'px', 'right': (whs - right - space) + 'px'});
 	}
 
-	private Blur() {
-		this.image.css({'filter': 'blur(5px)'})
+	private Blur(x, y) {
+		// this.image.css({'filter': 'blur(5px)'})
+
+		let imageData = this.context.getImageData(x, y, 50, 50);
+		// let red, green, blue, gray;
+
+		for (let i = 0; i < imageData.data.length; i += 4) {
+			// red = imageData.data[i];
+			// green = imageData.data[i + 1];
+			// blue = imageData.data[i + 2];
+			// gray = red * 0.3 + green * 0.59 + blue * 0.11;
+			imageData.data[i] = 255;
+			imageData.data[i + 1] = 200;
+			imageData.data[i + 2] = 146;
+		}
+
+		this.context.putImageData(imageData, x - 25, y - 25);
 	}
 
  	private UseBtn() {
