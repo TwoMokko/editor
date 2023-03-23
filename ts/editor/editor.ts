@@ -13,7 +13,10 @@ enum States {
 class Editor {
 	canvas						: JQuery<HTMLCanvasElement>;
 	context						: CanvasRenderingContext2D;
-	image						: JQuery<HTMLImageElement>;
+	orig						: HTMLCanvasElement;
+	orig_ctx					: CanvasRenderingContext2D;
+	image						: HTMLCanvasElement;
+	image_ctx					: CanvasRenderingContext2D;
 
 	canvas_container			: JQuery;
 	btn_container				: JQuery;
@@ -28,8 +31,6 @@ class Editor {
 	wh							: number;
 	width						: number;
 	height						: number;
-	carry_x						: number;
-	carry_y						: number;
 	angle						: number;
 	mouse_angle_from			: number;
 	mouse_angle					: number;
@@ -56,11 +57,12 @@ class Editor {
 		this.canvas				= $('canvas#test');
 		this.context 			= this.canvas[0].getContext('2d');
 		this.angle				= 0;
-		this.carry_x			= 0;
-		this.carry_y			= 0;
 		// this.scale_x			= 0;
 		// this.scale_y			= 0;
-		this.image				= $('<img/>', {});
+		this.orig				= document.createElement("canvas");
+		this.orig_ctx			= this.orig.getContext('2d');
+		this.image				= document.createElement("canvas");
+		this.image_ctx			= this.image.getContext('2d');
 
 		/* Elements */
 		this.btn_container 		= $('<div/>', { class: 'container' });
@@ -97,9 +99,19 @@ class Editor {
 			)
 		);
 
-		this.image[0].onload = () => {
-			this.width = this.image[0].width;
-			this.height = this.image[0].height;
+		const img = document.createElement('img');
+		img.crossOrigin = "Anonymous";
+		img.onload = () => {
+			this.width = img.width;
+			this.height = img.height;
+
+			this.orig.width = this.width;
+			this.orig.height = this.height;
+			this.orig_ctx.drawImage(img, 0, 0);
+
+			this.image.width = this.width;
+			this.image.height = this.height;
+			this.image_ctx.drawImage(img, 0, 0);
 
 			this.wh = Math.sqrt(this.width * this.width + this.height * this.height);
 
@@ -111,14 +123,14 @@ class Editor {
 			this.Scale(0.25, this.wh/2, this.wh/2, this.canvas_container.width()/2, this.canvas_container.height()/2);
 			this.state = States.Ready;
 		}
+		img.src = 'https://tests.local/Editor/2.jpg';
 
 		this.btn_rotate.on('click', () => { if (this.state == States.None) return; this.state = States.Rotate; this.UseBtn(); });
 		this.btn_crop.on('click', () => { if (this.state == States.None) return; this.state = States.Crop; this.UseBtn(); });
 		this.btn_blur.on('click', () => { if (this.state == States.None) return; this.state = States.Blur; this.UseBtn(); });
 		this.btn_scale.on('click', () => { if (this.state == States.None) return; this.state = States.Ready; this.UseBtn(); });
 
-
-		this.btn_reset.on('click', () => { if (this.state != States.Ready) return; else {this.Scale(0.25, this.wh/2, this.wh/2, this.canvas_container.width()/2, this.canvas_container.height()/2); this.carry_x = 0; this.carry_y = 0; this.Draw();} });
+		this.btn_reset.on('click', () => { if (this.state != States.Ready) return; else {this.Scale(0.25, this.wh/2, this.wh/2, this.canvas_container.width()/2, this.canvas_container.height()/2); this.Draw();} });
 		this.btn_reset.on('click', () => { if (this.state != States.Rotate) return; else {this.Rotate(0);} });
 		this.btn_reset.on('click', () => {
 				if (this.state != States.Crop) return;
@@ -147,7 +159,7 @@ class Editor {
 		// 	}
 		// );
 
-		this.image[0].src = 'css/pic/2.jpg';
+
 
 		this.canvas_container.on('wheel', (e) => {
 			if (this.state != States.Ready) return;
@@ -205,8 +217,25 @@ class Editor {
 
 			if (this.state == States.Blur)
 			{
-				console.log(e.offsetX, e.offsetY);
-				this.Blur(e.offsetX, e.offsetY);
+				this.canvas_container.on('mousemove.editor', (e) => {
+					const mX = (e.pageX - this.canvas_container[0].offsetLeft + this.canvas_container.scrollLeft() - this.canvas[0].width/2) / this.scale;
+					const mY = (e.pageY - this.canvas_container[0].offsetTop + this.canvas_container.scrollTop() - this.canvas[0].height/2) / this.scale;
+					const rX =  (mX * Math.cos(-this.angle * TO_RADIANS) - mY * Math.sin(-this.angle * TO_RADIANS) + this.width/2);
+					const rY =  (mX * Math.sin(-this.angle * TO_RADIANS) + mY * Math.cos(-this.angle * TO_RADIANS) + this.height/2);
+
+					console.log((e.pageX - this.canvas_container[0].offsetLeft), e.pageY - this.canvas_container[0].offsetTop);
+					console.log(rX, rY);
+
+					if (e.ctrlKey) this.UnBlur(rX, rY);
+					else this.Blur(rX, rY);
+
+					this.Draw();
+				});
+
+				this.canvas_container.on('mouseup.editor', () => {
+					this.canvas_container.off('mousemove.editor');
+					this.canvas_container.off('mouseup.editor');
+				});
 			}
 
 			if (this.state == States.Crop)
@@ -314,9 +343,9 @@ class Editor {
 		this.context.clearRect(0, 0, this.wh, this.wh);
 
 		this.context.save();
-		this.context.translate(this.wh / 2 + this.carry_x, this.wh / 2 + this.carry_y);
+		this.context.translate(this.wh / 2, this.wh / 2);
 		this.context.rotate(this.angle * TO_RADIANS);
-		this.context.drawImage(this.image[0], - this.width / 2, - this.height / 2);
+		this.context.drawImage(this.image, - this.width / 2, - this.height / 2);
 		this.context.restore();
 
 		this.DrawPolygon();
@@ -324,10 +353,10 @@ class Editor {
 
 	private Move(e)
 	{
-		let Ax = (this.wh / 2 + this.carry_x) * this.scale - this.rotate_x;
-		let Ay = (this.wh / 2 + this.carry_y) * this.scale - this.rotate_y;
-		let Bx = (this.wh / 2 + this.carry_x) * this.scale - (e.pageX - this.canvas[0].offsetLeft);
-		let By = (this.wh / 2 + this.carry_y) * this.scale - (e.pageY - this.canvas[0].offsetTop);
+		let Ax = this.wh / 2 * this.scale - this.rotate_x;
+		let Ay = this.wh / 2 * this.scale - this.rotate_y;
+		let Bx = this.wh / 2 * this.scale - (e.pageX - this.canvas[0].offsetLeft);
+		let By = this.wh / 2 * this.scale - (e.pageY - this.canvas[0].offsetTop);
 
 		let a = Math.sqrt( Ax * Ax + Ay * Ay );
 		let b = Math.sqrt( Bx * Bx + By * By );
@@ -354,10 +383,10 @@ class Editor {
 		let pol = [];
 
 		const whs = Math.round(this.scale * this.wh);
-		const left = Math.round(this.scale * this.crop[0]);
-		const right = Math.round(this.scale * this.crop[2]);
-		const top = Math.round(this.scale * this.crop[1]);
-		const bottom = Math.round(this.scale * this.crop[3]);
+		const left = Math.ceil(this.scale * this.crop[0]);
+		const right = Math.floor(this.scale * this.crop[2]);
+		const top = Math.ceil(this.scale * this.crop[1]);
+		const bottom = Math.floor(this.scale * this.crop[3]);
 		const space = 4;
 
 		const push = (x: string|number, y: string|number) => { pol.push(`${x} ${y}`); };
@@ -386,21 +415,28 @@ class Editor {
 
 	private Blur(x, y) {
 		// this.image.css({'filter': 'blur(5px)'})
-
-		let imageData = this.context.getImageData(x, y, 50, 50);
+		let imageData = this.image_ctx.getImageData(x - 25, y - 25, 50, 50);
 		// let red, green, blue, gray;
 
-		for (let i = 0; i < imageData.data.length; i += 4) {
-			// red = imageData.data[i];
-			// green = imageData.data[i + 1];
-			// blue = imageData.data[i + 2];
-			// gray = red * 0.3 + green * 0.59 + blue * 0.11;
-			imageData.data[i] = 255;
-			imageData.data[i + 1] = 200;
-			imageData.data[i + 2] = 146;
-		}
+		// for (let i = 0; i < imageData.data.length; i += 4) {
+		// 	const red = imageData.data[i];
+		// 	const green = imageData.data[i + 1];
+		// 	const blue = imageData.data[i + 2];
+		// 	const gray = red * 0.3 + green * 0.59 + blue * 0.11;
+		// 	imageData.data[i] = gray;
+		// 	imageData.data[i + 1] = gray;
+		// 	imageData.data[i + 2] = gray;
+		// }
 
-		this.context.putImageData(imageData, x - 25, y - 25);
+		Functions.blur(imageData, 50, 50, 2);
+
+		this.image_ctx.putImageData(imageData, x - 25, y - 25);
+	}
+
+	private UnBlur(x, y) {
+
+		let imageData = this.orig_ctx.getImageData(x - 25, y - 25, 50, 50);
+		this.image_ctx.putImageData(imageData, x - 25, y - 25);
 	}
 
  	private UseBtn() {

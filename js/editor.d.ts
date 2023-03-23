@@ -13,7 +13,10 @@ declare enum States {
 declare class Editor {
     canvas: JQuery<HTMLCanvasElement>;
     context: CanvasRenderingContext2D;
-    image: JQuery<HTMLImageElement>;
+    orig: HTMLCanvasElement;
+    orig_ctx: CanvasRenderingContext2D;
+    image: HTMLCanvasElement;
+    image_ctx: CanvasRenderingContext2D;
     canvas_container: JQuery;
     btn_container: JQuery;
     btn_rotate: JQuery;
@@ -26,8 +29,6 @@ declare class Editor {
     wh: number;
     width: number;
     height: number;
-    carry_x: number;
-    carry_y: number;
     angle: number;
     mouse_angle_from: number;
     mouse_angle: number;
@@ -53,5 +54,9 @@ declare class Editor {
     private Move;
     private DrawPolygon;
     private Blur;
+    private UnBlur;
     private UseBtn;
+}
+declare namespace Functions {
+    function blur(imageData: any, width: any, height: any, radius: any): void;
 }
