@@ -1,6 +1,9 @@
 /// <reference types="jquery" />
 /// <reference types="jquery" />
 /// <reference types="jqueryui" />
+declare namespace Functions {
+    function blur(imageData: any, width: any, height: any, radius: any): void;
+}
 import MouseMoveEvent = JQuery.MouseMoveEvent;
 declare const TO_RADIANS: number;
 declare enum States {
@@ -8,7 +11,8 @@ declare enum States {
     Ready = 1,
     Crop = 2,
     Rotate = 3,
-    Blur = 4
+    Blur = 4,
+    Bright = 5
 }
 declare class Editor {
     canvas: JQuery<HTMLCanvasElement>;
@@ -17,13 +21,19 @@ declare class Editor {
     orig_ctx: CanvasRenderingContext2D;
     image: HTMLCanvasElement;
     image_ctx: CanvasRenderingContext2D;
+    buffer: ImageData;
     canvas_container: JQuery;
+    top_container: JQuery;
     btn_container: JQuery;
     btn_rotate: JQuery;
     btn_crop: JQuery;
     btn_blur: JQuery;
+    btn_bright: JQuery;
     btn_scale: JQuery;
     btn_reset: JQuery;
+    toolbar: JQuery;
+    slider: JQuery;
+    touch: JQuery;
     state: number;
     scale: number;
     wh: number;
@@ -55,8 +65,9 @@ declare class Editor {
     private DrawPolygon;
     private Blur;
     private UnBlur;
+    private ChangeBright;
+    private RGBtoHSB;
+    private HSBtoRGB;
     private UseBtn;
-}
-declare namespace Functions {
-    function blur(imageData: any, width: any, height: any, radius: any): void;
+    private ChangeToolbar;
 }
