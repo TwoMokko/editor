@@ -32,7 +32,13 @@ declare class Editor {
     btn_scale: JQuery;
     btn_reset: JQuery;
     toolbar: JQuery;
-    slider: JQuery;
+    tool_rotate: JQuery;
+    tool_blur: JQuery;
+    brush1: JQuery;
+    brush2: JQuery;
+    brush3: JQuery;
+    brush4: JQuery;
+    tool_bright: JQuery;
     touch: JQuery;
     state: number;
     scale: number;
@@ -44,6 +50,8 @@ declare class Editor {
     mouse_angle: number;
     rotate_x: number;
     rotate_y: number;
+    left: number;
+    bright_percent: number;
     crop: [number, number, number, number];
     crop_background: JQuery;
     crop_container: JQuery;

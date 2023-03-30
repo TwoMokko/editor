@@ -71,20 +71,19 @@ div.toolbar {
   width: 400px;
 }
 
-div.slider {
+div.tool_bright {
   position: relative;
   width: 300px;
   height: 2px;
   background-color: brown;
   margin: auto;
 }
-div.slider div.touch {
+div.tool_bright div.touch {
   width: 16px;
   height: 16px;
   background-color: cadetblue;
   position: absolute;
   left: 142px;
-  right: 142px;
   top: -8px; /* bottom: - 8px; */
   cursor: pointer;
   border-radius: 4px;
