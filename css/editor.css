@@ -12,7 +12,7 @@ div.top_container {
   align-items: center;
   grid-gap: 1rem;
   height: 40px;
-  padding-left: 24px;
+  padding: 0 24px;
   background-color: rgba(0, 0, 0, 0.7019607843);
 }
 div.top_container .btn {
@@ -71,6 +71,73 @@ div.toolbar {
   width: 400px;
 }
 
+div.tool_rotate {
+  display: flex;
+  margin: auto;
+  justify-content: center;
+  align-items: center;
+  grid-gap: 1rem;
+}
+div.tool_rotate > div {
+  width: 24px;
+  height: 24px;
+  background-repeat: no-repeat;
+  background-size: 16px;
+  background-position: center;
+  cursor: pointer;
+  border-radius: 4px;
+}
+div.tool_rotate > div.clockwise {
+  background-image: url("pic/icon/Arrows right.svg");
+}
+div.tool_rotate > div.counter_clockwise {
+  background-image: url("pic/icon/Arrows left.svg");
+}
+div.tool_rotate > div.upside {
+  background-image: url("pic/icon/180.svg");
+}
+div.tool_rotate > div:hover {
+  background-color: rgba(255, 255, 255, 0.2509803922);
+}
+
+div.tool_blur {
+  margin: auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-column-gap: 10px;
+  align-items: center;
+}
+div.tool_blur > div {
+  border-radius: 50%;
+  background-color: cadetblue;
+  cursor: pointer;
+}
+div.tool_blur > div.brush1 {
+  height: 14px;
+  width: 14px;
+}
+div.tool_blur > div.brush2 {
+  height: 18px;
+  width: 18px;
+}
+div.tool_blur > div.brush3 {
+  height: 22px;
+  width: 22px;
+}
+div.tool_blur > div.brush4 {
+  height: 26px;
+  width: 26px;
+}
+div.tool_blur > div:hover {
+  background-color: #538587;
+}
+div.tool_blur .act_brush {
+  background-color: brown;
+}
+div.tool_blur .act_brush:hover {
+  background-color: #ba4040;
+}
+
 div.tool_bright {
   position: relative;
   width: 300px;
@@ -87,6 +154,29 @@ div.tool_bright div.touch {
   top: -8px; /* bottom: - 8px; */
   cursor: pointer;
   border-radius: 4px;
+}
+
+.end_container {
+  margin: auto 0 auto auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  grid-gap: 1rem;
+}
+.end_container > div {
+  width: 24px;
+  height: 24px;
+  background-repeat: no-repeat;
+  background-size: 16px;
+  background-position: center;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.end_container > div.save_img {
+  background-image: url("pic/icon/save.svg");
+}
+.end_container > div:hover {
+  background-color: rgba(255, 255, 255, 0.2509803922);
 }
 
 div.canvas {

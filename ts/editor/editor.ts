@@ -27,10 +27,13 @@ class Editor {
 	btn_crop					: JQuery;
 	btn_blur					: JQuery;
 	btn_bright					: JQuery;
-	btn_scale					: JQuery;
+	// btn_scale					: JQuery;
 	btn_reset					: JQuery;
 	toolbar						: JQuery;
 	tool_rotate					: JQuery;
+	clockwise					: JQuery;
+	counter_clockwise			: JQuery;
+	upside						: JQuery;
 	tool_blur					: JQuery;
 	brush1						: JQuery;
 	brush2						: JQuery;
@@ -38,6 +41,10 @@ class Editor {
 	brush4						: JQuery;
 	tool_bright					: JQuery;
 	touch						: JQuery;
+	end_container				: JQuery;
+	reset_all					: JQuery;
+	save_img					: JQuery;
+	exit						: JQuery;
 
 	state						: number;
 	scale						: number;
@@ -51,6 +58,7 @@ class Editor {
 	rotate_y					: number;
 	left						: number;
 	bright_percent				: number;
+	blur_size					: number;
 
 	crop						: [number, number, number, number];
 
@@ -72,8 +80,7 @@ class Editor {
 		this.canvas				= $('canvas#test');
 		this.context 			= this.canvas[0].getContext('2d');
 		this.angle				= 0;
-		// this.scale_x			= 0;
-		// this.scale_y			= 0;
+		this.blur_size			= 0;
 		this.orig				= document.createElement("canvas");
 		this.orig_ctx			= this.orig.getContext('2d');
 		this.image				= document.createElement("canvas");
@@ -86,11 +93,14 @@ class Editor {
 		this.btn_crop 			= $('<div/>', { class: 'btn crop' }).attr('title', 'Обрезка');
 		this.btn_blur 			= $('<div/>', { class: 'btn blur' }).attr('title', 'Размытие');
 		this.btn_bright 		= $('<div/>', { class: 'btn bright' }).attr('title', 'Яркость');
-		this.btn_scale 			= $('<div/>', { class: 'btn scale btn_use' }).attr('title', 'Масштаб');
+		// this.btn_scale 			= $('<div/>', { class: 'btn scale btn_use' }).attr('title', 'Масштаб');
 
 		this.btn_reset 			= $('<div/>', { class: 'reset' }).text('Сбросить');
 		this.toolbar 			= $('<div/>', { class: 'toolbar' }).addClass('hide');
 		this.tool_rotate 		= $('<div/>', { class: 'tool_rotate' }).addClass('hide');
+		this.clockwise	 		= $('<div/>', { class: 'clockwise' }).attr('title', '90° по часовой');
+		this.counter_clockwise	= $('<div/>', { class: 'counter_clockwise' }).attr('title', '90° против часовой');
+		this.upside		 		= $('<div/>', { class: 'upside' }).attr('title', '180°');
 		this.tool_blur	 		= $('<div/>', { class: 'tool_blur' }).addClass('hide');
 		this.brush1 			= $('<div/>', { class: 'brush1' });
 		this.brush2 			= $('<div/>', { class: 'brush2' });
@@ -98,6 +108,10 @@ class Editor {
 		this.brush4 			= $('<div/>', { class: 'brush4' });
 		this.tool_bright 		= $('<div/>', { class: 'tool_bright' }).addClass('hide');
 		this.touch 				= $('<div/>', { class: 'touch' });
+		this.end_container 		= $('<div/>', { class: 'end_container' });
+		this.reset_all 			= $('<div/>', { class: 'reset_all' }).attr('title', 'Сбросить всё');
+		this.save_img 			= $('<div/>', { class: 'save_img' }).attr('title', 'Сохранить');
+		this.exit		 		= $('<div/>', { class: 'exit' }).attr('title', 'Выход');
 
 		this.canvas_container	= $('div.canvas');
 		this.crop_background 	= $('<div/>', { class: 'crop_background' }).appendTo(this.canvas_container);
@@ -122,10 +136,14 @@ class Editor {
 					this.btn_crop,
 					this.btn_blur,
 					this.btn_bright,
-					this.btn_scale,
+					// this.btn_scale,
 				),
 				this.toolbar.append(
-					this.tool_rotate,
+					this.tool_rotate.append(
+						this.clockwise,
+						this.counter_clockwise,
+						this.upside
+					),
 					this.tool_blur.append(
 						this.brush1,
 						this.brush2,
@@ -136,6 +154,11 @@ class Editor {
 						this.touch
 					),
 					this.btn_reset
+				),
+				this.end_container.append(
+					this.reset_all,
+					this.save_img,
+					this.exit
 				)
 			)
 		);
@@ -170,15 +193,16 @@ class Editor {
 
 
 		/* Events */
-		this.btn_rotate.on(	'click', () => { if (this.state == States.None) return; this.state = States.Rotate; this.UseBtn(); this.ChangeToolbar(); });
-		this.btn_crop.on(	'click', () => { if (this.state == States.None) return; this.state = States.Crop; this.UseBtn(); this.ChangeToolbar(); });
-		this.btn_blur.on(	'click', () => { if (this.state == States.None) return; this.state = States.Blur; this.UseBtn(); this.ChangeToolbar(); this.buffer = this.image_ctx.getImageData(0, 0, this.width, this.height); });
-		this.btn_bright.on(	'click', () => { if (this.state == States.None) return; this.state = States.Bright; this.UseBtn(); this.ChangeToolbar(); this.buffer = this.image_ctx.getImageData(0, 0, this.width, this.height); });
-		this.btn_scale.on(	'click', () => { if (this.state == States.None) return; this.state = States.Ready; this.UseBtn(); this.ChangeToolbar(); });
+		this.btn_rotate.on(	'click', () => { if (this.state == States.None) return; if (this.btn_rotate.hasClass('btn_use')) { this.state = States.Ready; this.UseBtn(); } else this.state = States.Rotate; this.UseBtn(); this.ChangeToolbar(); });
+		this.btn_crop.on(	'click', () => { if (this.state == States.None) return; if (this.btn_crop.hasClass('btn_use')) { this.state = States.Ready; this.UseBtn(); } else this.state = States.Crop; this.UseBtn(); this.ChangeToolbar(); });
+		this.btn_blur.on(	'click', () => { if (this.state == States.None) return; if (this.btn_blur.hasClass('btn_use')) { this.state = States.Ready; this.UseBtn(); } else this.state = States.Blur; this.UseBtn(); this.ChangeToolbar(); this.buffer = this.image_ctx.getImageData(0, 0, this.width, this.height); this.blur_size = 40; this.tool_blur.children('div').removeClass('act_brush'); this.brush4.addClass('act_brush'); });
+		this.btn_bright.on(	'click', () => { if (this.state == States.None) return; if (this.btn_bright.hasClass('btn_use')) { this.state = States.Ready; this.UseBtn(); } else this.state = States.Bright; this.UseBtn(); this.ChangeToolbar(); this.buffer = this.image_ctx.getImageData(0, 0, this.width, this.height); });
+		// this.btn_scale.on(	'click', () => { if (this.state == States.None) return; this.state = States.Ready; this.UseBtn(); this.ChangeToolbar(); });
 
 		this.btn_reset.on(	'click', () => { if (this.state != States.Ready) return; else { this.Scale(0.25, this.wh/2, this.wh/2, this.canvas_container.width()/2, this.canvas_container.height()/2); this.Draw(); } });
 		this.btn_reset.on(	'click', () => { if (this.state != States.Rotate) return; else { this.Rotate(0); } });
 		this.btn_reset.on(	'click', () => { if (this.state != States.Bright) return; else { this.ChangeBright(this.orig_ctx.getImageData(0, 0, this.width, this.height), 0); this.Draw(); this.touch.css({ 'left': 142 }); } });
+		this.btn_reset.on(	'click', () => { if (this.state != States.Blur) return; else { /* this.image_ctx.putImageData(this.orig_ctx.getImageData(0, 0, this.width, this.height), 0, 0); */ } });
 		this.btn_reset.on(	'click', () => {
 				if (this.state != States.Crop) return;
 				else
@@ -192,6 +216,15 @@ class Editor {
 				}
 			}
 		);
+
+		this.brush1.on('click', () => { this.blur_size = 10; this.tool_blur.children('div').removeClass('act_brush'); this.brush1.addClass('act_brush'); })
+		this.brush2.on('click', () => { this.blur_size = 20; this.tool_blur.children('div').removeClass('act_brush'); this.brush2.addClass('act_brush'); })
+		this.brush3.on('click', () => { this.blur_size = 30; this.tool_blur.children('div').removeClass('act_brush'); this.brush3.addClass('act_brush'); })
+		this.brush4.on('click', () => { this.blur_size = 40; this.tool_blur.children('div').removeClass('act_brush'); this.brush4.addClass('act_brush'); })
+
+		this.clockwise.on('click', () => { this.Rotate(this.angle + 90); })
+		this.counter_clockwise.on('click', () => { this.Rotate(this.angle - 90); })
+		this.upside.on('click', () => { this.Rotate(this.angle + 180); })
 
 		this.touch.on('mousedown', (e) => {
 			if (this.state == States.Bright)
@@ -213,6 +246,9 @@ class Editor {
 					this.touch.css({ 'left': left });
 					this.ChangeBright(this.buffer, b_percent);
 					this.Draw();
+
+					// this.left = left;
+					// this.bright_percent = b_percent;
 				});
 
 				$(document).on('mouseup.editor', () => {
@@ -224,19 +260,51 @@ class Editor {
 			}
 		})
 
+		this.reset_all.on('click', () => {
+			this.state = States.Ready;
+			this.ChangeToolbar();
+			this.Scale(0.25, this.wh/2, this.wh/2, this.canvas_container.width()/2, this.canvas_container.height()/2);
+			this.Rotate(0);
+			this.ChangeBright(this.orig_ctx.getImageData(0, 0, this.width, this.height), 0);
+			this.touch.css({ 'left': 142 });
+			this.crop = [
+				(this.wh - this.width) / 2, (this.wh - this.height) / 2,
+				(this.wh + this.width) / 2, (this.wh + this.height) / 2
+			];
+			this.Draw();
+			this.UseBtn();
+		});
+		this.save_img.on('click', () => {  });
+		this.exit.on('click', () => {  });
+
 		this.canvas_container.on('wheel', (e) => {
 			// if (this.state != States.Ready) return;
-			if (e.ctrlKey) {
-				const oe = (e.originalEvent as WheelEvent);
+			const oe = (e.originalEvent as WheelEvent);
 
-				const dx = oe.pageX - this.canvas_container.offset().left;
-				const dy = oe.pageY - this.canvas_container.offset().top;
-				const px = (dx + this.canvas_container.scrollLeft()) / this.scale;
-				const py = (dy + this.canvas_container.scrollTop()) / this.scale;
+			const dx = oe.pageX - this.canvas_container.offset().left;
+			const dy = oe.pageY - this.canvas_container.offset().top;
+			const px = (dx + this.canvas_container.scrollLeft()) / this.scale;
+			const py = (dy + this.canvas_container.scrollTop()) / this.scale;
+			if (e.ctrlKey) {
+				// const oe = (e.originalEvent as WheelEvent);
+
+				// const dx = oe.pageX - this.canvas_container.offset().left;
+				// const dy = oe.pageY - this.canvas_container.offset().top;
+				// const px = (dx + this.canvas_container.scrollLeft()) / this.scale;
+				// const py = (dy + this.canvas_container.scrollTop()) / this.scale;
 				oe.deltaY < 0 ? this.Scale(this.scale * 1.1, px, py, dx, dy) : this.Scale( this.scale / 1.1, px, py, dx, dy);
 				return false;
 			}
-			else return;
+			if (e.shiftKey) {
+				const _left = this.canvas_container.scrollLeft();
+				oe.deltaY < 0 ? this.canvas_container.scrollLeft(_left - 20) : this.canvas_container.scrollLeft(_left + 20);
+				return false;
+			}
+			else {
+				const _top = this.canvas_container.scrollTop();
+				oe.deltaY < 0 ? this.canvas_container.scrollTop(_top - 20) : this.canvas_container.scrollTop(_top + 20);
+				return false;
+			}
 		});
 
 		this.canvas_container.on('mousedown', (e) => {
@@ -253,23 +321,23 @@ class Editor {
 				});
 			}
 
-			if (this.state == States.Ready)
-			{
-				const _top = this.canvas_container.scrollTop();
-				const _left = this.canvas_container.scrollLeft();
-
-				const _x = e.pageX;
-				const _y = e.pageY;
-				this.canvas_container.on('mousemove.editor', (e) => {
-					this.canvas_container.scrollLeft(_left - (e.pageX - _x));
-					this.canvas_container.scrollTop(_top - (e.pageY - _y));
-				});
-
-				this.canvas_container.on('mouseup.editor', () => {
-					this.canvas_container.off('mousemove.editor');
-					this.canvas_container.off('mouseup.editor');
-				});
-			}
+			// if (this.state == States.Ready)
+			// {
+			// 	const _top = this.canvas_container.scrollTop();
+			// 	const _left = this.canvas_container.scrollLeft();
+			//
+			// 	const _x = e.pageX;
+			// 	const _y = e.pageY;
+			// 	this.canvas_container.on('mousemove.editor', (e) => {
+			// 		this.canvas_container.scrollLeft(_left - (e.pageX - _x));
+			// 		this.canvas_container.scrollTop(_top - (e.pageY - _y));
+			// 	});
+			//
+			// 	this.canvas_container.on('mouseup.editor', () => {
+			// 		this.canvas_container.off('mousemove.editor');
+			// 		this.canvas_container.off('mouseup.editor');
+			// 	});
+			// }
 
 			if (this.state == States.Blur)
 			{
@@ -279,8 +347,8 @@ class Editor {
 					const rX =  (mX * Math.cos(-this.angle * TO_RADIANS) - mY * Math.sin(-this.angle * TO_RADIANS) + this.width/2);
 					const rY =  (mX * Math.sin(-this.angle * TO_RADIANS) + mY * Math.cos(-this.angle * TO_RADIANS) + this.height/2);
 
-					if (e.ctrlKey) this.UnBlur(rX, rY, 50);
-					else this.Blur(rX, rY, 50);
+					if (e.ctrlKey) this.UnBlur(rX, rY, this.blur_size);
+					else this.Blur(rX, rY, this.blur_size);
 
 					this.Draw();
 				});
@@ -573,7 +641,7 @@ class Editor {
 			case States.Crop: { this.btn_crop.addClass('btn_use'); this.crop_container.addClass('act'); } break;
 			case States.Blur: this.btn_blur.addClass('btn_use'); break;
 			case States.Bright: this.btn_bright.addClass('btn_use'); break;
-			case States.Ready: this.btn_scale.addClass('btn_use'); break;
+			case States.Ready: break;
 		}
 	}
 
