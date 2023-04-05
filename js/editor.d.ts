@@ -4,7 +4,6 @@
 declare namespace Functions {
     function blur(imageData: any, width: any, height: any, radius: any): void;
 }
-import MouseMoveEvent = JQuery.MouseMoveEvent;
 declare const TO_RADIANS: number;
 declare enum States {
     None = 0,
@@ -14,14 +13,38 @@ declare enum States {
     Blur = 4,
     Bright = 5
 }
+declare class MouseActionDMU {
+    protected name: string;
+    protected target: JQuery;
+    constructor(name: string, target: JQuery);
+    protected init(): void;
+    protected done(): void;
+    protected onDown(e: any): boolean;
+    protected onMove(e: any): void;
+    protected onUp(e: any): void;
+}
+declare class ChangeBrightness extends MouseActionDMU {
+    protected left: number;
+    protected e_x: number;
+    protected editor: Editor;
+    constructor(target: JQuery, editor: Editor);
+    protected onDown(e: any): boolean;
+    protected onMove(e: any): void;
+    protected onUp(e: any): void;
+}
 declare class Editor {
     canvas: JQuery<HTMLCanvasElement>;
     context: CanvasRenderingContext2D;
     orig: HTMLCanvasElement;
     orig_ctx: CanvasRenderingContext2D;
+    buffer: HTMLCanvasElement;
+    buffer_ctx: CanvasRenderingContext2D;
     image: HTMLCanvasElement;
     image_ctx: CanvasRenderingContext2D;
-    buffer: ImageData;
+    drawInterval: number;
+    needUpdateBright: boolean;
+    needUpdate: boolean;
+    needCropUpdate: boolean;
     canvas_container: JQuery;
     top_container: JQuery;
     btn_container: JQuery;
@@ -52,12 +75,12 @@ declare class Editor {
     width: number;
     height: number;
     angle: number;
+    brightness: number;
     mouse_angle_from: number;
     mouse_angle: number;
     rotate_x: number;
     rotate_y: number;
     left: number;
-    bright_percent: number;
     blur_size: number;
     crop: [number, number, number, number];
     crop_background: JQuery;
@@ -73,8 +96,12 @@ declare class Editor {
         bot_left: JQuery;
     };
     constructor();
+    protected setNeedUpdateBright(): void;
+    protected setNeedUpdate(): void;
+    protected setNeedCropUpdate(): void;
     Scale(scale: number, px: number, py: number, dx: number, dy: number): void;
     Rotate(angle: number): void;
+    Bright(bright: number): void;
     protected Draw(): void;
     private Move;
     private DrawPolygon;

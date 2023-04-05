@@ -197,14 +197,76 @@ var States;
     States[States["Blur"] = 4] = "Blur";
     States[States["Bright"] = 5] = "Bright";
 })(States || (States = {}));
+class MouseActionDMU {
+    name;
+    target;
+    constructor(name, target) {
+        this.name = name;
+        this.target = target;
+        this.init();
+    }
+    init() {
+        this.target.on(`mousedown.${this.name}`, (e) => {
+            if (!this.onDown(e)) {
+                this.done();
+                return;
+            }
+            $(document).on(`mousemove.${this.name}`, (e) => { this.onMove(e); });
+            $(document).on(`mouseup.${this.name}`, (e) => {
+                this.onUp(e);
+                this.done();
+            });
+        });
+    }
+    done() {
+        // this.target.off(`mousedown.${this.name}`);
+        $(document).off(`mousemove.${this.name}`);
+        $(document).off(`mouseup.${this.name}`);
+    }
+    onDown(e) { return false; }
+    onMove(e) { }
+    onUp(e) { }
+}
+class ChangeBrightness extends MouseActionDMU {
+    left;
+    e_x;
+    editor;
+    constructor(target, editor) {
+        super('brightness', target);
+        this.editor = editor;
+    }
+    onDown(e) {
+        if (this.editor.state != States.Bright)
+            return false;
+        this.left = this.editor.left;
+        this.e_x = e.pageX;
+        return true;
+    }
+    onMove(e) {
+        let percent = e.pageX - this.e_x;
+        this.left = this.editor.left + percent;
+        this.editor.touch.css({ 'left': this.left });
+        const br = (510.0 / 300.0) * (this.left + 8) - 255;
+        this.editor.Bright(br);
+    }
+    onUp(e) { this.editor.left = this.left; }
+}
 class Editor {
     canvas;
     context;
+    // Оригинал загруженного изображения
     orig;
     orig_ctx;
+    // Заблёренный оригинал
+    buffer;
+    buffer_ctx;
+    // Подготовленное к отображению изображение : тут поменяна яркость, контрастность и т.п.
     image;
     image_ctx;
-    buffer;
+    drawInterval = null;
+    needUpdateBright = false;
+    needUpdate = true;
+    needCropUpdate = true;
     canvas_container;
     top_container;
     btn_container;
@@ -236,12 +298,12 @@ class Editor {
     width;
     height;
     angle;
+    brightness;
     mouse_angle_from;
     mouse_angle;
     rotate_x;
     rotate_y;
     left;
-    bright_percent;
     blur_size;
     crop;
     crop_background;
@@ -253,10 +315,14 @@ class Editor {
         this.context = this.canvas[0].getContext('2d');
         this.angle = 0;
         this.blur_size = 0;
+        this.brightness = 0;
         this.orig = document.createElement("canvas");
         this.orig_ctx = this.orig.getContext('2d');
+        this.buffer = document.createElement("canvas");
+        this.buffer_ctx = this.buffer.getContext('2d');
         this.image = document.createElement("canvas");
         this.image_ctx = this.image.getContext('2d');
+        this.left = 142;
         /* Elements */
         this.top_container = $('<div/>', { class: 'top_container' });
         this.btn_container = $('<div/>', { class: 'btn_container' });
@@ -306,6 +372,9 @@ class Editor {
             this.orig.width = this.width;
             this.orig.height = this.height;
             this.orig_ctx.drawImage(img, 0, 0);
+            this.buffer.width = this.width;
+            this.buffer.height = this.height;
+            this.buffer_ctx.drawImage(img, 0, 0);
             this.image.width = this.width;
             this.image.height = this.height;
             this.image_ctx.drawImage(img, 0, 0);
@@ -316,6 +385,14 @@ class Editor {
             ];
             this.Scale(0.25, this.wh / 2, this.wh / 2, this.canvas_container.width() / 2, this.canvas_container.height() / 2);
             this.state = States.Ready;
+            this.drawInterval = setInterval(() => {
+                if (this.needUpdateBright)
+                    this.ChangeBright();
+                if (this.needUpdate)
+                    this.Draw();
+                if (this.needCropUpdate)
+                    this.DrawPolygon();
+            }, 40);
         };
         img.src = 'https://tests.local/Editor/2.jpg';
         /* Events */
@@ -339,20 +416,20 @@ class Editor {
             this.UseBtn();
         }
         else
-            this.state = States.Blur; this.UseBtn(); this.ChangeToolbar(); this.buffer = this.image_ctx.getImageData(0, 0, this.width, this.height); this.blur_size = 40; this.tool_blur.children('div').removeClass('act_brush'); this.brush4.addClass('act_brush'); });
+            this.state = States.Blur; this.UseBtn(); this.ChangeToolbar(); this.blur_size = 40; this.tool_blur.children('div').removeClass('act_brush'); this.brush4.addClass('act_brush'); });
         this.btn_bright.on('click', () => { if (this.state == States.None)
             return; if (this.btn_bright.hasClass('btn_use')) {
             this.state = States.Ready;
             this.UseBtn();
         }
         else
-            this.state = States.Bright; this.UseBtn(); this.ChangeToolbar(); this.buffer = this.image_ctx.getImageData(0, 0, this.width, this.height); });
+            this.state = States.Bright; this.UseBtn(); this.ChangeToolbar(); });
         // this.btn_scale.on(	'click', () => { if (this.state == States.None) return; this.state = States.Ready; this.UseBtn(); this.ChangeToolbar(); });
         this.btn_reset.on('click', () => { if (this.state != States.Ready)
             return;
         else {
             this.Scale(0.25, this.wh / 2, this.wh / 2, this.canvas_container.width() / 2, this.canvas_container.height() / 2);
-            this.Draw();
+            this.setNeedUpdate();
         } });
         this.btn_reset.on('click', () => { if (this.state != States.Rotate)
             return;
@@ -362,8 +439,8 @@ class Editor {
         this.btn_reset.on('click', () => { if (this.state != States.Bright)
             return;
         else {
-            this.ChangeBright(this.orig_ctx.getImageData(0, 0, this.width, this.height), 0);
-            this.Draw();
+            this.Bright(0);
+            this.setNeedUpdate();
             this.touch.css({ 'left': 142 });
         } });
         this.btn_reset.on('click', () => { if (this.state != States.Blur)
@@ -377,7 +454,7 @@ class Editor {
                     (this.wh - this.width) / 2, (this.wh - this.height) / 2,
                     (this.wh + this.width) / 2, (this.wh + this.height) / 2
                 ];
-                this.DrawPolygon();
+                this.setNeedCropUpdate();
             }
         });
         this.brush1.on('click', () => { this.blur_size = 10; this.tool_blur.children('div').removeClass('act_brush'); this.brush1.addClass('act_brush'); });
@@ -387,47 +464,43 @@ class Editor {
         this.clockwise.on('click', () => { this.Rotate(this.angle + 90); });
         this.counter_clockwise.on('click', () => { this.Rotate(this.angle - 90); });
         this.upside.on('click', () => { this.Rotate(this.angle + 180); });
-        this.touch.on('mousedown', (e) => {
-            if (this.state == States.Bright) {
-                if (!this.bright_percent)
-                    this.bright_percent = 0;
-                if (!this.left)
-                    this.left = 142;
-                let left = 0;
-                let b_percent = 0;
-                let e_x = e.pageX;
-                console.log(e.pageX);
-                $(document).on('mousemove.editor', (e) => {
-                    let percent = e.pageX - e_x;
-                    console.log(e.pageX, e_x, percent);
-                    left = this.left + percent;
-                    b_percent = this.bright_percent + percent * 100 / 150;
-                    this.touch.css({ 'left': left });
-                    this.ChangeBright(this.buffer, b_percent);
-                    this.Draw();
-                    // this.left = left;
-                    // this.bright_percent = b_percent;
-                });
-                $(document).on('mouseup.editor', () => {
-                    this.left = left;
-                    this.bright_percent = b_percent;
-                    $(document).off('mousemove.editor');
-                    $(document).off('mouseup.editor');
-                });
-            }
-        });
+        new ChangeBrightness(this.touch, this);
+        //
+        // this.touch.on('mousedown', (e) => {
+        // 	if (this.state == States.Bright)
+        // 	{
+        // 		let left = this.left;
+        // 		let e_x = e.pageX;
+        // 		$(document).on('mousemove.editor', (e) => {
+        // 			let percent = e.pageX - e_x;
+        // 			left = this.left + percent;
+        //
+        // 			this.touch.css({ 'left': left });
+        // 			const br = (510.0/300.0) * (left + 8) - 255;
+        // 			this.Bright(br);
+        // 		});
+        //
+        // 		$(document).on('mouseup.editor', () => {
+        // 			this.left = left;
+        //
+        // 			$(document).off('mousemove.editor');
+        // 			$(document).off('mouseup.editor');
+        // 		});
+        // 	}
+        // })
         this.reset_all.on('click', () => {
             this.state = States.Ready;
             this.ChangeToolbar();
             this.Scale(0.25, this.wh / 2, this.wh / 2, this.canvas_container.width() / 2, this.canvas_container.height() / 2);
-            this.Rotate(0);
-            this.ChangeBright(this.orig_ctx.getImageData(0, 0, this.width, this.height), 0);
+            this.angle = 0;
+            this.brightness = 0;
             this.touch.css({ 'left': 142 });
             this.crop = [
                 (this.wh - this.width) / 2, (this.wh - this.height) / 2,
                 (this.wh + this.width) / 2, (this.wh + this.height) / 2
             ];
-            this.Draw();
+            this.setNeedUpdateBright();
+            this.setNeedCropUpdate();
             this.UseBtn();
         });
         this.save_img.on('click', () => { });
@@ -470,23 +543,20 @@ class Editor {
                     this.canvas_container.off('mouseup.editor');
                 });
             }
-            // if (this.state == States.Ready)
-            // {
-            // 	const _top = this.canvas_container.scrollTop();
-            // 	const _left = this.canvas_container.scrollLeft();
-            //
-            // 	const _x = e.pageX;
-            // 	const _y = e.pageY;
-            // 	this.canvas_container.on('mousemove.editor', (e) => {
-            // 		this.canvas_container.scrollLeft(_left - (e.pageX - _x));
-            // 		this.canvas_container.scrollTop(_top - (e.pageY - _y));
-            // 	});
-            //
-            // 	this.canvas_container.on('mouseup.editor', () => {
-            // 		this.canvas_container.off('mousemove.editor');
-            // 		this.canvas_container.off('mouseup.editor');
-            // 	});
-            // }
+            if (this.state == States.Ready && e.ctrlKey) {
+                const _top = this.canvas_container.scrollTop();
+                const _left = this.canvas_container.scrollLeft();
+                const _x = e.pageX;
+                const _y = e.pageY;
+                this.canvas_container.on('mousemove.editor', (e) => {
+                    this.canvas_container.scrollLeft(_left - (e.pageX - _x));
+                    this.canvas_container.scrollTop(_top - (e.pageY - _y));
+                });
+                this.canvas_container.on('mouseup.editor', () => {
+                    this.canvas_container.off('mousemove.editor');
+                    this.canvas_container.off('mouseup.editor');
+                });
+            }
             if (this.state == States.Blur) {
                 this.canvas_container.on('mousemove.editor', (e) => {
                     const mX = (e.pageX - this.canvas_container[0].offsetLeft + this.canvas_container.scrollLeft() - this.canvas[0].width / 2) / this.scale;
@@ -497,7 +567,7 @@ class Editor {
                         this.UnBlur(rX, rY, this.blur_size);
                     else
                         this.Blur(rX, rY, this.blur_size);
-                    this.Draw();
+                    this.setNeedUpdateBright();
                 });
                 this.canvas_container.on('mouseup.editor', () => {
                     this.canvas_container.off('mousemove.editor');
@@ -516,7 +586,7 @@ class Editor {
                     this.crop[1] = _crop_t + (e.pageY - _y) / this.scale;
                     this.crop[2] = _crop_r + (e.pageX - _x) / this.scale;
                     this.crop[3] = _crop_b + (e.pageY - _y) / this.scale;
-                    this.DrawPolygon();
+                    this.setNeedCropUpdate();
                 });
                 this.canvas_container.on('mouseup.editor', () => {
                     this.canvas_container.off('mousemove.editor');
@@ -559,7 +629,7 @@ class Editor {
                         if (box.bottom !== null && this.crop[b] > box.bottom)
                             this.crop[b] = box.bottom;
                     }
-                    this.DrawPolygon();
+                    this.setNeedCropUpdate();
                 });
                 this.canvas_container.on('mouseup.editor', () => { this.canvas_container.off('mousemove.editor'); this.canvas_container.off('mouseup.editor'); });
             }
@@ -574,6 +644,9 @@ class Editor {
         this.crop_boxes.bot_left.on('mousedown', e => { return CropMove(0, 3, e, { left: 0, right: this.crop[2], top: this.crop[1], bottom: this.wh }); });
         this.crop_boxes.bot_right.on('mousedown', e => { return CropMove(2, 3, e, { left: this.crop[0], right: this.wh, top: this.crop[1], bottom: this.wh }); });
     }
+    setNeedUpdateBright() { this.needUpdateBright = true; this.needUpdate = true; }
+    setNeedUpdate() { this.needUpdate = true; }
+    setNeedCropUpdate() { this.needCropUpdate = true; }
     /* Methods */
     Scale(scale, px, py, dx, dy) {
         let whs = Math.round(scale * this.wh);
@@ -584,20 +657,16 @@ class Editor {
         this.scale = scale;
         this.canvas[0].width = whs;
         this.canvas[0].height = whs;
-        this.crop_background.css({ 'width': whs, 'height': whs });
-        this.crop_container.css({ 'width': whs, 'height': whs });
         this.context.scale(this.scale, this.scale);
         const scroll_x = px * this.scale - dx;
         const scroll_y = py * this.scale - dy;
         this.canvas_container.scrollLeft(scroll_x);
         this.canvas_container.scrollTop(scroll_y);
-        // this.crop = [
-        // 	Math.round(this.scale * (this.wh - this.width) / 2) + 'px', Math.round(this.scale * (this.wh - this.height) / 2) + 'px',
-        // 	Math.round(this.scale * (this.wh + this.width) / 2) + 'px', Math.round(this.scale * (this.wh + this.height) / 2) + 'px'
-        // ];
         this.Draw();
+        this.DrawPolygon();
     }
-    Rotate(angle) { this.angle = angle; this.Draw(); }
+    Rotate(angle) { this.angle = angle; this.setNeedUpdate(); }
+    Bright(bright) { this.brightness = bright; this.setNeedUpdateBright(); }
     // const A = this.Search(this.image.width / 2, this.image.height / 2, angle * TO_RADIANS);
     // const B = this.Search(- this.image.width / 2, this.image.height / 2, angle * TO_RADIANS);
     //
@@ -609,13 +678,13 @@ class Editor {
     // this.canvas.width = 2 * new_w;
     // this.canvas.height = 2 * new_h;
     Draw() {
+        this.needUpdate = false;
         this.context.clearRect(0, 0, this.wh, this.wh);
         this.context.save();
         this.context.translate(this.wh / 2, this.wh / 2);
         this.context.rotate(this.angle * TO_RADIANS);
         this.context.drawImage(this.image, -this.width / 2, -this.height / 2);
         this.context.restore();
-        this.DrawPolygon();
     }
     Move(e) {
         let Ax = this.wh / 2 * this.scale - this.rotate_x;
@@ -639,13 +708,14 @@ class Editor {
     // 	return [x * ca - y * sa, x * sa + y * ca];
     // }
     DrawPolygon() {
-        let pol = [];
+        this.needCropUpdate = false;
         const whs = Math.round(this.scale * this.wh);
         const left = Math.ceil(this.scale * this.crop[0]);
         const right = Math.floor(this.scale * this.crop[2]);
         const top = Math.ceil(this.scale * this.crop[1]);
         const bottom = Math.floor(this.scale * this.crop[3]);
         const space = 4;
+        let pol = [];
         const push = (x, y) => { pol.push(`${x} ${y}`); };
         push(0, 0);
         push(0, '100%');
@@ -657,6 +727,8 @@ class Editor {
         push(left + 'px', '100%');
         push('100%', '100%');
         push('100%', '0');
+        this.crop_background.css({ 'width': whs, 'height': whs });
+        this.crop_container.css({ 'width': whs, 'height': whs });
         this.crop_background.css({ 'clip-path': `polygon(${pol.join(',')})` });
         this.crop_boxes.top.css({ 'top': (top - space) + 'px', 'left': (left + space) + 'px', 'right': (whs - right + space) + 'px' });
         this.crop_boxes.bottom.css({ 'top': (bottom - space) + 'px', 'left': (left + space) + 'px', 'right': (whs - right + space) + 'px' });
@@ -668,26 +740,28 @@ class Editor {
         this.crop_boxes.bot_right.css({ 'top': (bottom - space) + 'px', 'right': (whs - right - space) + 'px' });
     }
     Blur(x, y, wh) {
-        let imageData = this.image_ctx.getImageData(x - wh / 2, y - wh / 2, wh, wh);
+        let imageData = this.buffer_ctx.getImageData(x - wh / 2, y - wh / 2, wh, wh);
         Functions.blur(imageData, wh, wh, 2);
-        this.image_ctx.putImageData(imageData, x - wh / 2, y - wh / 2);
+        this.buffer_ctx.putImageData(imageData, x - wh / 2, y - wh / 2);
     }
     UnBlur(x, y, wh) {
-        let imageData = this.orig_ctx.getImageData(x - wh / 2, y - 25, wh, wh);
-        this.image_ctx.putImageData(imageData, x - wh / 2, y - wh / 2);
+        let imageData = this.orig_ctx.getImageData(x - wh / 2, y - wh / 2, wh, wh);
+        this.buffer_ctx.putImageData(imageData, x - wh / 2, y - wh / 2);
     }
-    ChangeBright(img, percent) {
-        const imageData = this.image_ctx.getImageData(0, 0, this.width, this.height);
-        for (let i = 0; i < img.data.length; i += 4) {
-            const red = img.data[i];
-            const green = img.data[i + 1];
-            const blue = img.data[i + 2];
-            let HSL = this.RGBtoHSB(red, green, blue);
-            let newBrightness = HSL[2] + HSL[2] * (percent / 100);
-            let RGB = this.HSBtoRGB(HSL[0], HSL[1], newBrightness, red, green, blue);
-            imageData.data[i] = RGB[0];
-            imageData.data[i + 1] = RGB[1];
-            imageData.data[i + 2] = RGB[2];
+    ChangeBright() {
+        this.needUpdateBright = false;
+        const imageData = this.buffer_ctx.getImageData(0, 0, this.width, this.height);
+        if (this.brightness != 0) {
+            for (let i = 0; i < imageData.data.length; i += 4) {
+                const red = imageData.data[i];
+                const green = imageData.data[i + 1];
+                const blue = imageData.data[i + 2];
+                let HSB = this.RGBtoHSB(red, green, blue);
+                let RGB = this.HSBtoRGB(HSB[0], HSB[1], HSB[2] + this.brightness, red, green, blue);
+                imageData.data[i] = RGB[0];
+                imageData.data[i + 1] = RGB[1];
+                imageData.data[i + 2] = RGB[2];
+            }
         }
         this.image_ctx.putImageData(imageData, 0, 0);
     }
