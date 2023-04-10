@@ -23,9 +23,50 @@ declare class MouseActionDMU {
     protected onMove(e: any): void;
     protected onUp(e: any): void;
 }
+declare class Ready extends MouseActionDMU {
+    protected editor: Editor;
+    _top: number;
+    _left: number;
+    _x: number;
+    _y: number;
+    constructor(target: JQuery, editor: Editor);
+    protected onDown(e: any): boolean;
+    protected onMove(e: any): void;
+    protected onUp(e: any): void;
+}
 declare class ChangeBrightness extends MouseActionDMU {
+    protected editor: Editor;
     protected left: number;
     protected e_x: number;
+    constructor(target: JQuery, editor: Editor);
+    protected onDown(e: any): boolean;
+    protected onMove(e: any): void;
+    protected onUp(e: any): void;
+}
+declare class Rotate extends MouseActionDMU {
+    protected editor: Editor;
+    protected angle_from: number;
+    protected rotate_x: number;
+    protected rotate_y: number;
+    constructor(target: JQuery, editor: Editor);
+    protected onDown(e: any): boolean;
+    protected onMove(e: any): void;
+    protected onUp(e: any): void;
+}
+declare class Crop extends MouseActionDMU {
+    protected editor: Editor;
+    protected _crop_l: number;
+    protected _crop_t: number;
+    protected _crop_r: number;
+    protected _crop_b: number;
+    protected _x: number;
+    protected _y: number;
+    constructor(target: JQuery, editor: Editor);
+    protected onDown(e: any): boolean;
+    protected onMove(e: any): void;
+    protected onUp(e: any): void;
+}
+declare class Blur extends MouseActionDMU {
     protected editor: Editor;
     constructor(target: JQuery, editor: Editor);
     protected onDown(e: any): boolean;
@@ -69,6 +110,7 @@ declare class Editor {
     reset_all: JQuery;
     save_img: JQuery;
     exit: JQuery;
+    isShowLines: boolean;
     state: number;
     scale: number;
     wh: number;
@@ -76,10 +118,6 @@ declare class Editor {
     height: number;
     angle: number;
     brightness: number;
-    mouse_angle_from: number;
-    mouse_angle: number;
-    rotate_x: number;
-    rotate_y: number;
     left: number;
     blur_size: number;
     crop: [number, number, number, number];
@@ -96,17 +134,20 @@ declare class Editor {
         bot_left: JQuery;
     };
     constructor();
-    protected setNeedUpdateBright(): void;
-    protected setNeedUpdate(): void;
-    protected setNeedCropUpdate(): void;
+    showLines(): void;
+    hideLines(): void;
+    canvasToImg(x: number, y: number): [number, number, number, number];
+    setNeedUpdateBright(): void;
+    setNeedUpdate(): void;
+    setNeedCropUpdate(): void;
     Scale(scale: number, px: number, py: number, dx: number, dy: number): void;
     Rotate(angle: number): void;
     Bright(bright: number): void;
     protected Draw(): void;
-    private Move;
+    private DrawLines;
     private DrawPolygon;
-    private Blur;
-    private UnBlur;
+    Blur(x: any, y: any, wh: any): void;
+    UnBlur(x: any, y: any, wh: any): void;
     private ChangeBright;
     private RGBtoHSB;
     private HSBtoRGB;
