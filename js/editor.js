@@ -710,12 +710,13 @@ class Editor {
     DrawLines() {
         // let circuit_x = (this.wh - this.width) / 2;
         // let circuit_y = (this.wh - this.height) / 2;
+        this.context.globalAlpha = 0.2;
         this.context.beginPath();
         // this.context.lineWidth = 1;
         this.context.moveTo(this.wh / 6, 0);
         this.context.lineTo(this.wh / 6, this.wh);
-        this.context.lineWidth = 1 / this.scale;
-        this.context.strokeStyle = "black";
+        this.context.lineWidth = 20 / this.scale;
+        this.context.strokeStyle = "blue";
         this.context.stroke();
         this.context.moveTo(2 * this.wh / 6, 0);
         this.context.lineTo(2 * this.wh / 6, this.wh);

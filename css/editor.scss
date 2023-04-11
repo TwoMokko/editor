@@ -27,7 +27,7 @@ div.top_container {
 	.bright 	{ background-image: url("pic/icon/luminance.svg"); }
 	.scale 		{ background-image: url("pic/icon/scale.svg"); }
 	.reset {
-		display: inline-block; padding: 4px; background-color: cadetblue; cursor: pointer; border-radius: 8px;
+		display: inline-block; padding: 4px; background-color: cadetblue; cursor: pointer; border-radius: 8px; color: white;
 		&:hover { background-color: #538587; }
 	}
 }
@@ -71,9 +71,9 @@ div.tool_bright {
 	margin: auto 0 auto auto; display: flex; justify-content: center; align-items: center; grid-gap: 1rem;
 	> div {
 		width: 24px; height: 24px; background-repeat: no-repeat; background-size: 16px; background-position: center; cursor: pointer; border-radius: 4px;
-		&.reset_all {  }
+		&.reset_all { background-image: url("pic/icon/Prohibit.svg"); }
 		&.save_img { background-image: url("pic/icon/save.svg"); }
-		&.exit {  }
+		&.exit { background-image: url("pic/icon/X.svg"); }
 		&:hover { background-color: #ffffff40; }
 	}
 }

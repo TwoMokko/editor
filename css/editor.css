@@ -60,6 +60,7 @@ div.top_container .reset {
   background-color: cadetblue;
   cursor: pointer;
   border-radius: 8px;
+  color: white;
 }
 div.top_container .reset:hover {
   background-color: #538587;
@@ -172,8 +173,14 @@ div.tool_bright div.touch {
   cursor: pointer;
   border-radius: 4px;
 }
+.end_container > div.reset_all {
+  background-image: url("pic/icon/Prohibit.svg");
+}
 .end_container > div.save_img {
   background-image: url("pic/icon/save.svg");
+}
+.end_container > div.exit {
+  background-image: url("pic/icon/X.svg");
 }
 .end_container > div:hover {
   background-color: rgba(255, 255, 255, 0.2509803922);
