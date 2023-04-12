@@ -144,6 +144,7 @@ declare class Editor {
     Rotate(angle: number): void;
     Bright(bright: number): void;
     protected Draw(): void;
+    protected SaveImg(): void;
     private DrawLines;
     private DrawPolygon;
     Blur(x: any, y: any, wh: any): void;

@@ -291,7 +291,6 @@ class Rotate extends MouseActionDMU {
         this.angle_from = this.editor.angle;
         let px, py, dx, dy;
         [px, py, dx, dy] = this.editor.canvasToImg(e.pageX, e.pageY);
-        console.log(px, py);
         this.rotate_x = px;
         this.rotate_y = py;
         return true;
@@ -607,7 +606,10 @@ class Editor {
             this.setNeedCropUpdate();
             this.UseBtn();
         });
-        this.save_img.on('click', () => { });
+        this.save_img.on('click', () => {
+            this.SaveImg();
+            console.log('1');
+        });
         this.exit.on('click', () => { });
         this.canvas_container.on('wheel', (e) => {
             const oe = e.originalEvent;
@@ -707,45 +709,44 @@ class Editor {
         if (this.isShowLines)
             this.DrawLines();
     }
+    SaveImg() {
+        this.orig.width = this.wh;
+        this.orig.height = this.wh;
+        this.orig_ctx.clearRect(0, 0, this.wh, this.wh);
+        this.orig_ctx.scale(1, 1);
+        this.orig_ctx.save();
+        this.orig_ctx.translate(this.wh / 2, this.wh / 2);
+        this.orig_ctx.rotate(this.angle * TO_RADIANS);
+        this.orig_ctx.drawImage(this.image, -this.width / 2, -this.height / 2);
+        this.orig_ctx.restore();
+        let img_save = this.orig_ctx.getImageData(this.crop[0], this.crop[1], this.crop[2] - this.crop[0], this.crop[3] - this.crop[1]);
+        this.orig.width = this.crop[2] - this.crop[0];
+        this.orig.height = this.crop[3] - this.crop[1];
+        this.orig_ctx.clearRect(0, 0, 100000, 100000);
+        this.orig_ctx.putImageData(img_save, 0, 0);
+        const img = $('<img/>', { width: this.crop[2] - this.crop[0], height: this.crop[3] - this.crop[1] }).appendTo($('body'));
+        img[0].src = this.orig.toDataURL();
+    }
     DrawLines() {
-        // let circuit_x = (this.wh - this.width) / 2;
-        // let circuit_y = (this.wh - this.height) / 2;
-        this.context.globalAlpha = 0.2;
-        this.context.beginPath();
-        // this.context.lineWidth = 1;
-        this.context.moveTo(this.wh / 6, 0);
-        this.context.lineTo(this.wh / 6, this.wh);
-        this.context.lineWidth = 20 / this.scale;
-        this.context.strokeStyle = "blue";
-        this.context.stroke();
-        this.context.moveTo(2 * this.wh / 6, 0);
-        this.context.lineTo(2 * this.wh / 6, this.wh);
-        this.context.stroke();
-        this.context.moveTo(3 * this.wh / 6, 0);
-        this.context.lineTo(3 * this.wh / 6, this.wh);
-        this.context.stroke();
-        this.context.moveTo(4 * this.wh / 6, 0);
-        this.context.lineTo(4 * this.wh / 6, this.wh);
-        this.context.stroke();
-        this.context.moveTo(5 * this.wh / 6, 0);
-        this.context.lineTo(5 * this.wh / 6, this.wh);
-        this.context.stroke();
-        this.context.moveTo(0, this.wh / 6);
-        this.context.lineTo(this.wh, this.wh / 6);
-        this.context.stroke();
-        this.context.moveTo(0, 2 * this.wh / 6);
-        this.context.lineTo(this.wh, 2 * this.wh / 6);
-        this.context.stroke();
-        this.context.moveTo(0, 3 * this.wh / 6);
-        this.context.lineTo(this.wh, 3 * this.wh / 6);
-        this.context.stroke();
-        this.context.moveTo(0, 4 * this.wh / 6);
-        this.context.lineTo(this.wh, 4 * this.wh / 6);
-        this.context.stroke();
-        this.context.moveTo(0, 5 * this.wh / 6);
-        this.context.lineTo(this.wh, 5 * this.wh / 6);
-        this.context.stroke();
-        this.context.closePath();
+        this.context.lineWidth = 1 / this.scale;
+        const count = 6;
+        const color = '#00000060';
+        for (let i = 0; i < count + 1; i++) {
+            this.context.beginPath();
+            this.context.strokeStyle = color;
+            this.context.moveTo(i * (this.crop[2] - this.crop[0]) / count + this.crop[0], this.crop[1]);
+            this.context.lineTo(i * (this.crop[2] - this.crop[0]) / count + this.crop[0], this.crop[3]);
+            this.context.stroke();
+            this.context.closePath();
+        }
+        for (let i = 0; i < count + 1; i++) {
+            this.context.beginPath();
+            this.context.strokeStyle = color;
+            this.context.moveTo(this.crop[0], i * (this.crop[3] - this.crop[1]) / count + this.crop[1]);
+            this.context.lineTo(this.crop[2], i * (this.crop[3] - this.crop[1]) / count + this.crop[1]);
+            this.context.stroke();
+            this.context.closePath();
+        }
     }
     DrawPolygon() {
         this.needCropUpdate = false;
