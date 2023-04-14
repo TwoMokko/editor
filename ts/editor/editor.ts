@@ -9,6 +9,215 @@ enum States {
 	Bright
 }
 
+class ManageButton
+{
+	public static active			: ManageButton = null;
+	protected activated				: boolean;
+	protected editor				: Editor;
+	protected btn					: JQuery;
+	protected tool					: JQuery;
+	protected btn_class				: string;
+	protected btn_title				: string;
+	protected tool_class			: string;
+	protected state					: number;
+
+	public constructor(btn_class: string, btn_title: string, tool_class: string, state: number, editor: Editor)
+	{
+		this.activated				= false;
+		this.editor					= editor;
+		this.btn_class				= btn_class;
+		this.btn_title				= btn_title;
+		this.tool_class				= tool_class;
+		this.state					= state;
+	}
+
+	protected Init()
+	{
+		this.btn 					= $('<div/>', {class: this.btn_class, 'title': this.btn_title, click: () => { this.activated ? this.Deactivate() : this.Activate(); }});
+		this.tool 					= $('<div/>', {class: this.tool_class + ' hide'});
+
+		this.CreateToolElem();
+		this.AddToolElem();
+
+		// this.btn_name.on('click', () => {
+		// 	if (this.editor.state == States.None) return;
+		// 	if (this.btn_name.hasClass('btn_use')) { this.editor.state = States.Ready; this.UseBtn(); }
+		// 	else this.editor.state = this.state; this.UseBtn(); this.ChangeToolbar();
+		// });
+
+		this.editor.btn_reset.on('click', () => {
+			if (this.editor.state != this.state) return;
+			else this.Reset();
+		});
+	}
+
+	public Activate()
+	{
+		if (this.activated || this.editor.state == States.None) return;
+		this.activated = true;
+
+		if (ManageButton.active) ManageButton.active.Deactivate();
+		ManageButton.active = this;
+
+		this.btn.addClass('btn_use');
+		this.tool.removeClass('hide');
+
+		this.editor.state = this.state;
+		this.OnActivate();
+	}
+
+	public Deactivate()
+	{
+		if (!this.activated) return;
+		this.activated = false;
+
+		this.btn.removeClass('btn_use');
+		this.tool.addClass('hide');
+		this.editor.state = States.Ready;
+		this.OnDeactivate();
+	}
+
+	protected OnActivate() {}
+	protected OnDeactivate() {}
+
+	protected CreateToolElem(): void {}
+	protected AddToolElem(): void {}
+	protected Reset(): void {}
+
+}
+
+class Rotate_b extends ManageButton
+{
+	protected clockwise				: JQuery;
+	protected counter_clockwise		: JQuery;
+	protected upside				: JQuery;
+
+	public constructor(editor: Editor) {
+		super('rotate', 'Поворот', 'tool_rotate', States.Rotate, editor);
+
+		this.Init();
+	}
+
+	protected Reset() { this.editor.Rotate(0); }
+
+	protected CreateToolElem()
+	{
+		this.clockwise	 			= $('<div/>', { class: 'clockwise' }).attr('title', '90° по часовой');
+		this.counter_clockwise		= $('<div/>', { class: 'counter_clockwise' }).attr('title', '90° против часовой');
+		this.upside		 			= $('<div/>', { class: 'upside' }).attr('title', '180°');
+
+		this.clockwise.on('click', () => { this.editor.Rotate(this.editor.angle + 90); })
+		this.counter_clockwise.on('click', () => { this.editor.Rotate(this.editor.angle - 90); })
+		this.upside.on('click', () => { this.editor.Rotate(this.editor.angle + 180); })
+	}
+
+	protected AddToolElem()
+	{
+		this.tool.append(
+			this.clockwise,
+			this.counter_clockwise,
+			this.upside
+		);
+	}
+
+	protected OnActivate() { this.editor.ShowLines(); /* this.editor.state = States.Rotate; */ }
+	protected OnDeactivate() { this.editor.HideLines(); }
+}
+
+class Crop_b extends ManageButton
+{
+
+	public constructor(editor: Editor) {
+		super('crop', 'Обрезка', 'tool_crop', States.Crop, editor);
+
+		this.Init();
+	}
+
+	protected Reset() {
+		this.editor.crop = [
+			(this.editor.wh - this.editor.width) / 2, (this.editor.wh - this.editor.height) / 2,
+			(this.editor.wh + this.editor.width) / 2, (this.editor.wh + this.editor.height) / 2
+		];
+
+		this.editor.setNeedCropUpdate();
+	}
+
+	protected CreateToolElem()
+	{
+
+	}
+
+	protected AddToolElem()
+	{
+		this.tool.append(
+
+		);
+	}
+
+	protected OnActivate() { /* this.editor.state = States.Crop; */ }
+	protected OnDeactivate() {  }
+}
+
+class Blur_b extends ManageButton
+{
+	public constructor(editor: Editor) {
+		super('blur', 'Размытие', 'tool_blur', States.Blur, editor);
+
+		this.Init();
+	}
+
+	protected Reset() {
+		let imageData = this.editor.orig_ctx.getImageData(0, 0, this.editor.width, this.editor.height);
+		this.editor.buffer_ctx.putImageData(imageData, 0, 0);
+		this.editor.setNeedUpdateBright();
+	}
+
+	protected CreateToolElem()
+	{
+
+	}
+
+	protected AddToolElem()
+	{
+		this.tool.append(
+
+		);
+	}
+
+	protected OnActivate() { /* this.editor.state = States.Blur; */ }
+	protected OnDeactivate() {  }
+}
+
+class Bright_b extends ManageButton
+{
+	public constructor(editor: Editor) {
+		super('bright', 'Яркость', 'tool_bright', States.Bright, editor);
+
+		this.Init();
+	}
+
+	protected Reset() {
+		this.editor.Bright(0);
+		this.editor.setNeedUpdate();
+		this.editor.touch.css({ 'left': 142 });
+	}
+
+	protected CreateToolElem()
+	{
+
+	}
+
+	protected AddToolElem()
+	{
+		this.tool.append(
+
+		);
+	}
+
+	protected OnActivate() { /* this.editor.state = States.Blur; */ }
+	protected OnDeactivate() {  }
+}
+
 class MouseActionDMU
 {
 	protected name		: string;
@@ -52,10 +261,10 @@ class MouseActionDMU
 class Ready extends MouseActionDMU
 {
 	protected editor	: Editor;
-	_top				: number;
-	_left				: number;
-	_x					: number;
-	_y					: number;
+	protected _top		: number;
+	protected _left		: number;
+	protected _x		: number;
+	protected _y		: number;
 
 	public constructor(target: JQuery, editor: Editor)
 	{
@@ -260,16 +469,16 @@ class Editor {
 	canvas_container			: JQuery;
 	top_container				: JQuery;
 	btn_container				: JQuery;
-	btn_rotate					: JQuery;
-	btn_crop					: JQuery;
-	btn_blur					: JQuery;
-	btn_bright					: JQuery;
+	// btn_rotate					: JQuery;
+	// btn_crop					: JQuery;
+	// btn_blur					: JQuery;
+	// btn_bright					: JQuery;
 	btn_reset					: JQuery;
 	toolbar						: JQuery;
-	tool_rotate					: JQuery;
-	clockwise					: JQuery;
-	counter_clockwise			: JQuery;
-	upside						: JQuery;
+	// tool_rotate					: JQuery;
+	// clockwise					: JQuery;
+	// counter_clockwise			: JQuery;
+	// upside						: JQuery;
 	tool_blur					: JQuery;
 	brush1						: JQuery;
 	brush2						: JQuery;
@@ -329,17 +538,17 @@ class Editor {
 		/* Elements */
 		this.top_container 		= $('<div/>', { class: 'top_container' });
 		this.btn_container 		= $('<div/>', { class: 'btn_container' });
-		this.btn_rotate 		= $('<div/>', { class: 'btn rotate' }).attr('title', 'Поворот');
-		this.btn_crop 			= $('<div/>', { class: 'btn crop' }).attr('title', 'Обрезка');
-		this.btn_blur 			= $('<div/>', { class: 'btn blur' }).attr('title', 'Размытие');
-		this.btn_bright 		= $('<div/>', { class: 'btn bright' }).attr('title', 'Яркость');
+		// this.btn_rotate 		= $('<div/>', { class: 'btn rotate' }).attr('title', 'Поворот');
+		// this.btn_crop 			= $('<div/>', { class: 'btn crop' }).attr('title', 'Обрезка');
+		// this.btn_blur 			= $('<div/>', { class: 'btn blur' }).attr('title', 'Размытие');
+		// this.btn_bright 		= $('<div/>', { class: 'btn bright' }).attr('title', 'Яркость');
 
 		this.btn_reset 			= $('<div/>', { class: 'reset' }).text('Сбросить');
 		this.toolbar 			= $('<div/>', { class: 'toolbar' }).addClass('hide');
-		this.tool_rotate 		= $('<div/>', { class: 'tool_rotate' }).addClass('hide');
-		this.clockwise	 		= $('<div/>', { class: 'clockwise' }).attr('title', '90° по часовой');
-		this.counter_clockwise	= $('<div/>', { class: 'counter_clockwise' }).attr('title', '90° против часовой');
-		this.upside		 		= $('<div/>', { class: 'upside' }).attr('title', '180°');
+		// this.tool_rotate 		= $('<div/>', { class: 'tool_rotate' }).addClass('hide');
+		// this.clockwise	 		= $('<div/>', { class: 'clockwise' }).attr('title', '90° по часовой');
+		// this.counter_clockwise	= $('<div/>', { class: 'counter_clockwise' }).attr('title', '90° против часовой');
+		// this.upside		 		= $('<div/>', { class: 'upside' }).attr('title', '180°');
 		this.tool_blur	 		= $('<div/>', { class: 'tool_blur' }).addClass('hide');
 		this.brush1 			= $('<div/>', { class: 'brush1' });
 		this.brush2 			= $('<div/>', { class: 'brush2' });
@@ -367,31 +576,39 @@ class Editor {
 			bot_left 			: $('<div/>', { class: 'angle_ne' }).appendTo(this.crop_container),
 		}
 
+		const rotate = new Rotate_b(this);
+		const crop = new Crop_b(this);
+		const blur = new Blur_b(this);
+		const bright = new Bright_b(this);
 
 		/* Building DOM */
 		$('body').prepend(
 			this.top_container.append(
 				this.btn_container.append(
-					this.btn_rotate,
-					this.btn_crop,
-					this.btn_blur,
-					this.btn_bright,
+					// rotate,
+					// crop,
+					// blur,
+					// bright
+					// this.btn_rotate,
+					// this.btn_crop,
+					// this.btn_blur,
+					// this.btn_bright,
 				),
 				this.toolbar.append(
-					this.tool_rotate.append(
-						this.clockwise,
-						this.counter_clockwise,
-						this.upside
-					),
-					this.tool_blur.append(
-						this.brush1,
-						this.brush2,
-						this.brush3,
-						this.brush4
-					),
-					this.tool_bright. append(
-						this.touch
-					),
+					// this.tool_rotate.append(
+					// 	this.clockwise,
+					// 	this.counter_clockwise,
+					// 	this.upside
+					// ),
+					// this.tool_blur.append(
+					// 	this.brush1,
+					// 	this.brush2,
+					// 	this.brush3,
+					// 	this.brush4
+					// ),
+					// this.tool_bright. append(
+					// 	this.touch
+					// ),
 					this.btn_reset
 				),
 				this.end_container.append(
@@ -443,42 +660,42 @@ class Editor {
 
 
 		/* Events */
-		this.btn_rotate.on(	'click', () => { if (this.state == States.None) return; if (this.btn_rotate.hasClass('btn_use')) { this.state = States.Ready; this.UseBtn(); } else this.state = States.Rotate; this.UseBtn(); this.ChangeToolbar(); });
-		this.btn_crop.on(	'click', () => { if (this.state == States.None) return; if (this.btn_crop.hasClass('btn_use')) { this.state = States.Ready; this.UseBtn(); } else this.state = States.Crop; this.UseBtn(); this.ChangeToolbar(); });
-		this.btn_blur.on(	'click', () => { if (this.state == States.None) return; if (this.btn_blur.hasClass('btn_use')) { this.state = States.Ready; this.UseBtn(); } else this.state = States.Blur; this.UseBtn(); this.ChangeToolbar(); this.blur_size = 40; this.tool_blur.children('div').removeClass('act_brush'); this.brush4.addClass('act_brush'); });
-		this.btn_bright.on(	'click', () => { if (this.state == States.None) return; if (this.btn_bright.hasClass('btn_use')) { this.state = States.Ready; this.UseBtn(); } else this.state = States.Bright; this.UseBtn(); this.ChangeToolbar(); });
+		// this.btn_rotate.on(	'click', () => { if (this.state == States.None) return; if (this.btn_rotate.hasClass('btn_use')) { this.state = States.Ready; this.UseBtn(); } else this.state = States.Rotate; this.UseBtn(); this.ChangeToolbar(); });
+		// this.btn_crop.on(	'click', () => { if (this.state == States.None) return; if (this.btn_crop.hasClass('btn_use')) { this.state = States.Ready; this.UseBtn(); } else this.state = States.Crop; this.UseBtn(); this.ChangeToolbar(); });
+		// this.btn_blur.on(	'click', () => { if (this.state == States.None) return; if (this.btn_blur.hasClass('btn_use')) { this.state = States.Ready; this.UseBtn(); } else this.state = States.Blur; this.UseBtn(); this.ChangeToolbar(); this.blur_size = 40; this.tool_blur.children('div').removeClass('act_brush'); this.brush4.addClass('act_brush'); });
+		// this.btn_bright.on(	'click', () => { if (this.state == States.None) return; if (this.btn_bright.hasClass('btn_use')) { this.state = States.Ready; this.UseBtn(); } else this.state = States.Bright; this.UseBtn(); this.ChangeToolbar(); });
 		// this.btn_scale.on(	'click', () => { if (this.state == States.None) return; this.state = States.Ready; this.UseBtn(); this.ChangeToolbar(); });
 
-		this.btn_reset.on(	'click', () => { if (this.state != States.Ready) return; else { this.Scale(0.25, this.wh/2, this.wh/2, this.canvas_container.width()/2, this.canvas_container.height()/2); this.setNeedUpdate(); } });
-		this.btn_reset.on(	'click', () => { if (this.state != States.Rotate) return; else { this.Rotate(0); } });
-		this.btn_reset.on(	'click', () => { if (this.state != States.Bright) return; else { this.Bright(0); this.setNeedUpdate(); this.touch.css({ 'left': 142 }); } });
-		this.btn_reset.on(	'click', () => { if (this.state != States.Blur) return; else {
-			let imageData = this.orig_ctx.getImageData(0, 0, this.width, this.height);
-			this.buffer_ctx.putImageData(imageData, 0, 0);
-			this.setNeedUpdateBright();
-		} });
-		this.btn_reset.on(	'click', () => {
-				if (this.state != States.Crop) return;
-				else
-				{
-					this.crop = [
-						(this.wh - this.width) / 2, (this.wh - this.height) / 2,
-						(this.wh + this.width) / 2, (this.wh + this.height) / 2
-					];
-
-				this.setNeedCropUpdate();
-				}
-			}
-		);
+		// this.btn_reset.on(	'click', () => { if (this.state != States.Ready) return; else { this.Scale(0.25, this.wh/2, this.wh/2, this.canvas_container.width()/2, this.canvas_container.height()/2); this.setNeedUpdate(); } });
+		// this.btn_reset.on(	'click', () => { if (this.state != States.Rotate) return; else { this.Rotate(0); } });
+		// this.btn_reset.on(	'click', () => { if (this.state != States.Bright) return; else { this.Bright(0); this.setNeedUpdate(); this.touch.css({ 'left': 142 }); } });
+		// this.btn_reset.on(	'click', () => { if (this.state != States.Blur) return; else {
+		// 	let imageData = this.orig_ctx.getImageData(0, 0, this.width, this.height);
+		// 	this.buffer_ctx.putImageData(imageData, 0, 0);
+		// 	this.setNeedUpdateBright();
+		// } });
+		// this.btn_reset.on(	'click', () => {
+		// 		if (this.state != States.Crop) return;
+		// 		else
+		// 		{
+		// 			this.crop = [
+		// 				(this.wh - this.width) / 2, (this.wh - this.height) / 2,
+		// 				(this.wh + this.width) / 2, (this.wh + this.height) / 2
+		// 			];
+		//
+		// 		this.setNeedCropUpdate();
+		// 		}
+		// 	}
+		// );
 
 		this.brush1.on('click', () => { this.blur_size = 10; this.tool_blur.children('div').removeClass('act_brush'); this.brush1.addClass('act_brush'); })
 		this.brush2.on('click', () => { this.blur_size = 20; this.tool_blur.children('div').removeClass('act_brush'); this.brush2.addClass('act_brush'); })
 		this.brush3.on('click', () => { this.blur_size = 30; this.tool_blur.children('div').removeClass('act_brush'); this.brush3.addClass('act_brush'); })
 		this.brush4.on('click', () => { this.blur_size = 40; this.tool_blur.children('div').removeClass('act_brush'); this.brush4.addClass('act_brush'); })
 
-		this.clockwise.on('click', () => { this.Rotate(this.angle + 90); })
-		this.counter_clockwise.on('click', () => { this.Rotate(this.angle - 90); })
-		this.upside.on('click', () => { this.Rotate(this.angle + 180); })
+		// this.clockwise.on('click', () => { this.Rotate(this.angle + 90); })
+		// this.counter_clockwise.on('click', () => { this.Rotate(this.angle - 90); })
+		// this.upside.on('click', () => { this.Rotate(this.angle + 180); })
 
 		new Ready(this.canvas_container, this);
 		new ChangeBrightness(this.touch, this);
@@ -488,7 +705,7 @@ class Editor {
 
 		this.reset_all.on('click', () => {
 			this.state = States.Ready;
-			this.ChangeToolbar();
+			// this.ChangeToolbar();
 			this.Scale(0.25, this.wh/2, this.wh/2, this.canvas_container.width()/2, this.canvas_container.height()/2);
 			this.angle = 0;
 			this.brightness = 0;
@@ -499,7 +716,7 @@ class Editor {
 			];
 			this.setNeedUpdateBright();
 			this.setNeedCropUpdate();
-			this.UseBtn();
+			// this.UseBtn();
 		});
 		this.save_img.on('click', () => { this.SaveImg();
 			console.log('1'); });
@@ -564,8 +781,8 @@ class Editor {
 		this.crop_boxes.bot_right.on(	'mousedown', e => { return CropMove(2, 3, e, {left: this.crop[0], right: this.wh, top: this.crop[1], bottom: this.wh}); });
 	}
 
-	public showLines() { this.isShowLines = true; this.setNeedUpdate(); }
-	public hideLines() { this.isShowLines = false; this.setNeedUpdate(); }
+	public ShowLines() { this.isShowLines = true; this.setNeedUpdate(); }
+	public HideLines() { this.isShowLines = false; this.setNeedUpdate(); }
 
 	public canvasToImg(x: number, y: number) : [number, number, number, number]
 	{
@@ -803,36 +1020,36 @@ class Editor {
 		return [r, g, b];
 	}
 
- 	private UseBtn() : void
-	{
-		this.crop_container.removeClass('act');
-		this.btn_container.children('.btn').removeClass('btn_use');
-		switch (this.state) {
-			case States.Rotate: this.btn_rotate.addClass('btn_use'); break;
-			case States.Crop: { this.btn_crop.addClass('btn_use'); this.crop_container.addClass('act'); } break;
-			case States.Blur: this.btn_blur.addClass('btn_use'); break;
-			case States.Bright: this.btn_bright.addClass('btn_use'); break;
-			case States.Ready: break;
-		}
-	}
-
-	private ChangeToolbar() : void
-	{
-		this.toolbar.addClass('hide');
-		this.tool_rotate.addClass('hide');
-		this.tool_blur.addClass('hide');
-		this.tool_bright.addClass('hide');
-
-		this.hideLines();
-
-		switch (this.state) {
-			case States.Rotate:	this.toolbar.removeClass('hide'); this.tool_rotate.removeClass('hide'); this.showLines(); break;
-			case States.Crop:	this.toolbar.removeClass('hide'); break;
-			case States.Blur:	this.toolbar.removeClass('hide'); this.tool_blur.removeClass('hide'); break;
-			case States.Bright:	this.toolbar.removeClass('hide'); this.tool_bright.removeClass('hide'); break;
-			case States.Ready:	this.toolbar.addClass('hide'); break;
-		}
-	}
+ 	// private UseBtn() : void
+	// {
+	// 	this.crop_container.removeClass('act');
+	// 	this.btn_container.children('.btn').removeClass('btn_use');
+	// 	switch (this.state) {
+	// 		case States.Rotate: this.btn_rotate.addClass('btn_use'); break;
+	// 		case States.Crop: { this.btn_crop.addClass('btn_use'); this.crop_container.addClass('act'); } break;
+	// 		case States.Blur: this.btn_blur.addClass('btn_use'); break;
+	// 		case States.Bright: this.btn_bright.addClass('btn_use'); break;
+	// 		case States.Ready: break;
+	// 	}
+	// }
+	//
+	// private ChangeToolbar() : void
+	// {
+	// 	this.toolbar.addClass('hide');
+	// 	this.tool_rotate.addClass('hide');
+	// 	this.tool_blur.addClass('hide');
+	// 	this.tool_bright.addClass('hide');
+	//
+	// 	this.hideLines();
+	//
+	// 	switch (this.state) {
+	// 		case States.Rotate:	this.toolbar.removeClass('hide'); this.tool_rotate.removeClass('hide'); this.showLines(); break;
+	// 		case States.Crop:	this.toolbar.removeClass('hide'); break;
+	// 		case States.Blur:	this.toolbar.removeClass('hide'); this.tool_blur.removeClass('hide'); break;
+	// 		case States.Bright:	this.toolbar.removeClass('hide'); this.tool_bright.removeClass('hide'); break;
+	// 		case States.Ready:	this.toolbar.addClass('hide'); break;
+	// 	}
+	// }
 
 }
 

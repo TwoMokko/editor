@@ -13,6 +13,61 @@ declare enum States {
     Blur = 4,
     Bright = 5
 }
+declare class ManageButton {
+    static active: ManageButton;
+    protected activated: boolean;
+    protected editor: Editor;
+    protected btn: JQuery;
+    protected tool: JQuery;
+    protected btn_class: string;
+    protected btn_title: string;
+    protected tool_class: string;
+    protected state: number;
+    constructor(btn_class: string, btn_title: string, tool_class: string, state: number, editor: Editor);
+    protected Init(): void;
+    Activate(): void;
+    Deactivate(): void;
+    protected OnActivate(): void;
+    protected OnDeactivate(): void;
+    protected CreateToolElem(): void;
+    protected AddToolElem(): void;
+    protected Reset(): void;
+}
+declare class Rotate_b extends ManageButton {
+    protected clockwise: JQuery;
+    protected counter_clockwise: JQuery;
+    protected upside: JQuery;
+    constructor(editor: Editor);
+    protected Reset(): void;
+    protected CreateToolElem(): void;
+    protected AddToolElem(): void;
+    protected OnActivate(): void;
+    protected OnDeactivate(): void;
+}
+declare class Crop_b extends ManageButton {
+    constructor(editor: Editor);
+    protected Reset(): void;
+    protected CreateToolElem(): void;
+    protected AddToolElem(): void;
+    protected OnActivate(): void;
+    protected OnDeactivate(): void;
+}
+declare class Blur_b extends ManageButton {
+    constructor(editor: Editor);
+    protected Reset(): void;
+    protected CreateToolElem(): void;
+    protected AddToolElem(): void;
+    protected OnActivate(): void;
+    protected OnDeactivate(): void;
+}
+declare class Bright_b extends ManageButton {
+    constructor(editor: Editor);
+    protected Reset(): void;
+    protected CreateToolElem(): void;
+    protected AddToolElem(): void;
+    protected OnActivate(): void;
+    protected OnDeactivate(): void;
+}
 declare class MouseActionDMU {
     protected name: string;
     protected target: JQuery;
@@ -25,10 +80,10 @@ declare class MouseActionDMU {
 }
 declare class Ready extends MouseActionDMU {
     protected editor: Editor;
-    _top: number;
-    _left: number;
-    _x: number;
-    _y: number;
+    protected _top: number;
+    protected _left: number;
+    protected _x: number;
+    protected _y: number;
     constructor(target: JQuery, editor: Editor);
     protected onDown(e: any): boolean;
     protected onMove(e: any): void;
@@ -89,16 +144,8 @@ declare class Editor {
     canvas_container: JQuery;
     top_container: JQuery;
     btn_container: JQuery;
-    btn_rotate: JQuery;
-    btn_crop: JQuery;
-    btn_blur: JQuery;
-    btn_bright: JQuery;
     btn_reset: JQuery;
     toolbar: JQuery;
-    tool_rotate: JQuery;
-    clockwise: JQuery;
-    counter_clockwise: JQuery;
-    upside: JQuery;
     tool_blur: JQuery;
     brush1: JQuery;
     brush2: JQuery;
@@ -134,8 +181,8 @@ declare class Editor {
         bot_left: JQuery;
     };
     constructor();
-    showLines(): void;
-    hideLines(): void;
+    ShowLines(): void;
+    HideLines(): void;
     canvasToImg(x: number, y: number): [number, number, number, number];
     setNeedUpdateBright(): void;
     setNeedUpdate(): void;
@@ -152,6 +199,4 @@ declare class Editor {
     private ChangeBright;
     private RGBtoHSB;
     private HSBtoRGB;
-    private UseBtn;
-    private ChangeToolbar;
 }

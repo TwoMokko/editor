@@ -40,8 +40,8 @@ div.tool_rotate {
 	display: flex; margin: auto; justify-content: center; align-items: center; grid-gap: 1rem;
 	> div {
 		width: 24px; height: 24px; background-repeat: no-repeat; background-size: 16px; background-position: center; cursor: pointer; border-radius: 4px;
-		&.clockwise { background-image: url("pic/icon/Arrows right.svg"); }
-		&.counter_clockwise { background-image: url("pic/icon/Arrows left.svg"); }
+		&.clockwise { background-image: url("pic/icon/90.svg"); }
+		&.counter_clockwise { background-image: url("pic/icon/-90.svg"); }
 		&.upside { background-image: url("pic/icon/180.svg"); }
 		&:hover { background-color: #ffffff40; }
 	}

@@ -89,10 +89,10 @@ div.tool_rotate > div {
   border-radius: 4px;
 }
 div.tool_rotate > div.clockwise {
-  background-image: url("pic/icon/Arrows right.svg");
+  background-image: url("pic/icon/90.svg");
 }
 div.tool_rotate > div.counter_clockwise {
-  background-image: url("pic/icon/Arrows left.svg");
+  background-image: url("pic/icon/-90.svg");
 }
 div.tool_rotate > div.upside {
   background-image: url("pic/icon/180.svg");
