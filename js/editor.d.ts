@@ -1,9 +1,6 @@
 /// <reference types="jquery" />
 /// <reference types="jquery" />
 /// <reference types="jqueryui" />
-declare namespace Functions {
-    function blur(imageData: any, width: any, height: any, radius: any): void;
-}
 declare const TO_RADIANS: number;
 declare enum States {
     None = 0,
@@ -17,8 +14,8 @@ declare class ManageButton {
     static active: ManageButton;
     protected activated: boolean;
     protected editor: Editor;
-    protected btn: JQuery;
-    protected tool: JQuery;
+    btn: JQuery;
+    tool: JQuery;
     protected btn_class: string;
     protected btn_title: string;
     protected tool_class: string;
@@ -53,6 +50,10 @@ declare class Crop_b extends ManageButton {
     protected OnDeactivate(): void;
 }
 declare class Blur_b extends ManageButton {
+    protected brush1: JQuery;
+    protected brush2: JQuery;
+    protected brush3: JQuery;
+    protected brush4: JQuery;
     constructor(editor: Editor);
     protected Reset(): void;
     protected CreateToolElem(): void;
@@ -61,6 +62,7 @@ declare class Blur_b extends ManageButton {
     protected OnDeactivate(): void;
 }
 declare class Bright_b extends ManageButton {
+    touch: JQuery;
     constructor(editor: Editor);
     protected Reset(): void;
     protected CreateToolElem(): void;
@@ -144,19 +146,16 @@ declare class Editor {
     canvas_container: JQuery;
     top_container: JQuery;
     btn_container: JQuery;
-    btn_reset: JQuery;
     toolbar: JQuery;
-    tool_blur: JQuery;
-    brush1: JQuery;
-    brush2: JQuery;
-    brush3: JQuery;
-    brush4: JQuery;
-    tool_bright: JQuery;
-    touch: JQuery;
+    btn_reset: JQuery;
     end_container: JQuery;
     reset_all: JQuery;
     save_img: JQuery;
     exit: JQuery;
+    rotate_b: Rotate_b;
+    crop_b: Crop_b;
+    blur_b: Blur_b;
+    bright_b: Bright_b;
     isShowLines: boolean;
     state: number;
     scale: number;
@@ -199,4 +198,7 @@ declare class Editor {
     private ChangeBright;
     private RGBtoHSB;
     private HSBtoRGB;
+}
+declare namespace Functions {
+    function blur(imageData: any, width: any, height: any, radius: any): void;
 }

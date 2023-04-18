@@ -14,8 +14,8 @@ class ManageButton
 	public static active			: ManageButton = null;
 	protected activated				: boolean;
 	protected editor				: Editor;
-	protected btn					: JQuery;
-	protected tool					: JQuery;
+	public btn						: JQuery;
+	public tool						: JQuery;
 	protected btn_class				: string;
 	protected btn_title				: string;
 	protected tool_class			: string;
@@ -33,17 +33,14 @@ class ManageButton
 
 	protected Init()
 	{
-		this.btn 					= $('<div/>', {class: this.btn_class, 'title': this.btn_title, click: () => { this.activated ? this.Deactivate() : this.Activate(); }});
+		this.btn 					= $('<div/>', {class: this.btn_class + ' btn', 'title': this.btn_title, click: () => { this.activated ? this.Deactivate() : this.Activate(); }});
 		this.tool 					= $('<div/>', {class: this.tool_class + ' hide'});
+
+		this.editor.btn_container.append( this.btn );
+		this.editor.toolbar.prepend( this.tool );
 
 		this.CreateToolElem();
 		this.AddToolElem();
-
-		// this.btn_name.on('click', () => {
-		// 	if (this.editor.state == States.None) return;
-		// 	if (this.btn_name.hasClass('btn_use')) { this.editor.state = States.Ready; this.UseBtn(); }
-		// 	else this.editor.state = this.state; this.UseBtn(); this.ChangeToolbar();
-		// });
 
 		this.editor.btn_reset.on('click', () => {
 			if (this.editor.state != this.state) return;
@@ -60,6 +57,7 @@ class ManageButton
 		ManageButton.active = this;
 
 		this.btn.addClass('btn_use');
+		this.editor.toolbar.removeClass('hide');
 		this.tool.removeClass('hide');
 
 		this.editor.state = this.state;
@@ -154,12 +152,17 @@ class Crop_b extends ManageButton
 		);
 	}
 
-	protected OnActivate() { /* this.editor.state = States.Crop; */ }
-	protected OnDeactivate() {  }
+	protected OnActivate() { /* this.editor.state = States.Crop; */ this.editor.crop_container.addClass('act'); }
+	protected OnDeactivate() { this.editor.crop_container.removeClass('act'); }
 }
 
 class Blur_b extends ManageButton
 {
+	protected brush1				: JQuery;
+	protected brush2				: JQuery;
+	protected brush3				: JQuery;
+	protected brush4				: JQuery;
+
 	public constructor(editor: Editor) {
 		super('blur', 'Размытие', 'tool_blur', States.Blur, editor);
 
@@ -174,22 +177,29 @@ class Blur_b extends ManageButton
 
 	protected CreateToolElem()
 	{
-
+		this.brush1 				= $('<div/>', { class: 'brush1' }).on('click', () => { this.editor.blur_size = 10; this.tool.children('div').removeClass('act_brush'); this.brush1.addClass('act_brush'); });
+		this.brush2 				= $('<div/>', { class: 'brush2' }).on('click', () => { this.editor.blur_size = 20; this.tool.children('div').removeClass('act_brush'); this.brush2.addClass('act_brush'); });
+		this.brush3 				= $('<div/>', { class: 'brush3' }).on('click', () => { this.editor.blur_size = 30; this.tool.children('div').removeClass('act_brush'); this.brush3.addClass('act_brush'); });
+		this.brush4 				= $('<div/>', { class: 'brush4' }).on('click', () => { this.editor.blur_size = 40; this.tool.children('div').removeClass('act_brush'); this.brush4.addClass('act_brush'); });
 	}
 
 	protected AddToolElem()
 	{
 		this.tool.append(
-
+			this.brush1,
+			this.brush2,
+			this.brush3,
+			this.brush4
 		);
 	}
 
-	protected OnActivate() { /* this.editor.state = States.Blur; */ }
+	protected OnActivate() { /* this.editor.state = States.Blur; */ this.editor.blur_size = 40; this.tool.children('div').removeClass('act_brush'); this.brush4.addClass('act_brush'); }
 	protected OnDeactivate() {  }
 }
 
 class Bright_b extends ManageButton
 {
+	public touch					: JQuery;
 	public constructor(editor: Editor) {
 		super('bright', 'Яркость', 'tool_bright', States.Bright, editor);
 
@@ -199,18 +209,15 @@ class Bright_b extends ManageButton
 	protected Reset() {
 		this.editor.Bright(0);
 		this.editor.setNeedUpdate();
-		this.editor.touch.css({ 'left': 142 });
+		this.touch.css({ 'left': 142 });
 	}
 
-	protected CreateToolElem()
-	{
-
-	}
+	protected CreateToolElem() { this.touch = $('<div/>', { class: 'touch' }); }
 
 	protected AddToolElem()
 	{
 		this.tool.append(
-
+			this.touch
 		);
 	}
 
@@ -314,7 +321,7 @@ class ChangeBrightness extends MouseActionDMU
 	protected onMove(e) {
 		let percent = e.pageX - this.e_x;
 		this.left = this.editor.left + percent;
-		this.editor.touch.css({ 'left': this.left });
+		this.editor.bright_b.touch.css({ 'left': this.left });
 		const br = (510.0/300.0) * (this.left + 8) - 255;
 		this.editor.Bright(br);
 	}
@@ -469,27 +476,18 @@ class Editor {
 	canvas_container			: JQuery;
 	top_container				: JQuery;
 	btn_container				: JQuery;
-	// btn_rotate					: JQuery;
-	// btn_crop					: JQuery;
-	// btn_blur					: JQuery;
-	// btn_bright					: JQuery;
-	btn_reset					: JQuery;
 	toolbar						: JQuery;
-	// tool_rotate					: JQuery;
-	// clockwise					: JQuery;
-	// counter_clockwise			: JQuery;
-	// upside						: JQuery;
-	tool_blur					: JQuery;
-	brush1						: JQuery;
-	brush2						: JQuery;
-	brush3						: JQuery;
-	brush4						: JQuery;
-	tool_bright					: JQuery;
-	touch						: JQuery;
+	btn_reset					: JQuery;
+
 	end_container				: JQuery;
 	reset_all					: JQuery;
 	save_img					: JQuery;
 	exit						: JQuery;
+
+	rotate_b					: Rotate_b;
+	crop_b						: Crop_b;
+	blur_b						: Blur_b;
+	bright_b					: Bright_b;
 
 	isShowLines					: boolean;
 	state						: number;
@@ -538,24 +536,8 @@ class Editor {
 		/* Elements */
 		this.top_container 		= $('<div/>', { class: 'top_container' });
 		this.btn_container 		= $('<div/>', { class: 'btn_container' });
-		// this.btn_rotate 		= $('<div/>', { class: 'btn rotate' }).attr('title', 'Поворот');
-		// this.btn_crop 			= $('<div/>', { class: 'btn crop' }).attr('title', 'Обрезка');
-		// this.btn_blur 			= $('<div/>', { class: 'btn blur' }).attr('title', 'Размытие');
-		// this.btn_bright 		= $('<div/>', { class: 'btn bright' }).attr('title', 'Яркость');
-
 		this.btn_reset 			= $('<div/>', { class: 'reset' }).text('Сбросить');
 		this.toolbar 			= $('<div/>', { class: 'toolbar' }).addClass('hide');
-		// this.tool_rotate 		= $('<div/>', { class: 'tool_rotate' }).addClass('hide');
-		// this.clockwise	 		= $('<div/>', { class: 'clockwise' }).attr('title', '90° по часовой');
-		// this.counter_clockwise	= $('<div/>', { class: 'counter_clockwise' }).attr('title', '90° против часовой');
-		// this.upside		 		= $('<div/>', { class: 'upside' }).attr('title', '180°');
-		this.tool_blur	 		= $('<div/>', { class: 'tool_blur' }).addClass('hide');
-		this.brush1 			= $('<div/>', { class: 'brush1' });
-		this.brush2 			= $('<div/>', { class: 'brush2' });
-		this.brush3 			= $('<div/>', { class: 'brush3' });
-		this.brush4 			= $('<div/>', { class: 'brush4' });
-		this.tool_bright 		= $('<div/>', { class: 'tool_bright' }).addClass('hide');
-		this.touch 				= $('<div/>', { class: 'touch' });
 		this.end_container 		= $('<div/>', { class: 'end_container' });
 		this.reset_all 			= $('<div/>', { class: 'reset_all' }).attr('title', 'Сбросить всё');
 		this.save_img 			= $('<div/>', { class: 'save_img' }).attr('title', 'Сохранить');
@@ -576,39 +558,25 @@ class Editor {
 			bot_left 			: $('<div/>', { class: 'angle_ne' }).appendTo(this.crop_container),
 		}
 
-		const rotate = new Rotate_b(this);
-		const crop = new Crop_b(this);
-		const blur = new Blur_b(this);
-		const bright = new Bright_b(this);
+		this.rotate_b			= new Rotate_b(this);
+		this.crop_b				= new Crop_b(this);
+		this.blur_b				= new Blur_b(this);
+		this.bright_b			= new Bright_b(this);
 
 		/* Building DOM */
 		$('body').prepend(
 			this.top_container.append(
 				this.btn_container.append(
-					// rotate,
-					// crop,
-					// blur,
-					// bright
-					// this.btn_rotate,
-					// this.btn_crop,
-					// this.btn_blur,
-					// this.btn_bright,
+					// this.rotate_b.btn,
+					// this.crop_b.btn,
+					// this.blur_b.btn,
+					// this.bright_b.btn
 				),
 				this.toolbar.append(
-					// this.tool_rotate.append(
-					// 	this.clockwise,
-					// 	this.counter_clockwise,
-					// 	this.upside
-					// ),
-					// this.tool_blur.append(
-					// 	this.brush1,
-					// 	this.brush2,
-					// 	this.brush3,
-					// 	this.brush4
-					// ),
-					// this.tool_bright. append(
-					// 	this.touch
-					// ),
+					// this.rotate_b.tool,
+					// this.crop_b.tool,
+					// this.blur_b.tool,
+					// this.bright_b.tool,
 					this.btn_reset
 				),
 				this.end_container.append(
@@ -660,45 +628,8 @@ class Editor {
 
 
 		/* Events */
-		// this.btn_rotate.on(	'click', () => { if (this.state == States.None) return; if (this.btn_rotate.hasClass('btn_use')) { this.state = States.Ready; this.UseBtn(); } else this.state = States.Rotate; this.UseBtn(); this.ChangeToolbar(); });
-		// this.btn_crop.on(	'click', () => { if (this.state == States.None) return; if (this.btn_crop.hasClass('btn_use')) { this.state = States.Ready; this.UseBtn(); } else this.state = States.Crop; this.UseBtn(); this.ChangeToolbar(); });
-		// this.btn_blur.on(	'click', () => { if (this.state == States.None) return; if (this.btn_blur.hasClass('btn_use')) { this.state = States.Ready; this.UseBtn(); } else this.state = States.Blur; this.UseBtn(); this.ChangeToolbar(); this.blur_size = 40; this.tool_blur.children('div').removeClass('act_brush'); this.brush4.addClass('act_brush'); });
-		// this.btn_bright.on(	'click', () => { if (this.state == States.None) return; if (this.btn_bright.hasClass('btn_use')) { this.state = States.Ready; this.UseBtn(); } else this.state = States.Bright; this.UseBtn(); this.ChangeToolbar(); });
-		// this.btn_scale.on(	'click', () => { if (this.state == States.None) return; this.state = States.Ready; this.UseBtn(); this.ChangeToolbar(); });
-
-		// this.btn_reset.on(	'click', () => { if (this.state != States.Ready) return; else { this.Scale(0.25, this.wh/2, this.wh/2, this.canvas_container.width()/2, this.canvas_container.height()/2); this.setNeedUpdate(); } });
-		// this.btn_reset.on(	'click', () => { if (this.state != States.Rotate) return; else { this.Rotate(0); } });
-		// this.btn_reset.on(	'click', () => { if (this.state != States.Bright) return; else { this.Bright(0); this.setNeedUpdate(); this.touch.css({ 'left': 142 }); } });
-		// this.btn_reset.on(	'click', () => { if (this.state != States.Blur) return; else {
-		// 	let imageData = this.orig_ctx.getImageData(0, 0, this.width, this.height);
-		// 	this.buffer_ctx.putImageData(imageData, 0, 0);
-		// 	this.setNeedUpdateBright();
-		// } });
-		// this.btn_reset.on(	'click', () => {
-		// 		if (this.state != States.Crop) return;
-		// 		else
-		// 		{
-		// 			this.crop = [
-		// 				(this.wh - this.width) / 2, (this.wh - this.height) / 2,
-		// 				(this.wh + this.width) / 2, (this.wh + this.height) / 2
-		// 			];
-		//
-		// 		this.setNeedCropUpdate();
-		// 		}
-		// 	}
-		// );
-
-		this.brush1.on('click', () => { this.blur_size = 10; this.tool_blur.children('div').removeClass('act_brush'); this.brush1.addClass('act_brush'); })
-		this.brush2.on('click', () => { this.blur_size = 20; this.tool_blur.children('div').removeClass('act_brush'); this.brush2.addClass('act_brush'); })
-		this.brush3.on('click', () => { this.blur_size = 30; this.tool_blur.children('div').removeClass('act_brush'); this.brush3.addClass('act_brush'); })
-		this.brush4.on('click', () => { this.blur_size = 40; this.tool_blur.children('div').removeClass('act_brush'); this.brush4.addClass('act_brush'); })
-
-		// this.clockwise.on('click', () => { this.Rotate(this.angle + 90); })
-		// this.counter_clockwise.on('click', () => { this.Rotate(this.angle - 90); })
-		// this.upside.on('click', () => { this.Rotate(this.angle + 180); })
-
 		new Ready(this.canvas_container, this);
-		new ChangeBrightness(this.touch, this);
+		new ChangeBrightness(this.bright_b.touch, this);
 		new Rotate(this.canvas_container, this);
 		new Crop(this.canvas_container, this);
 		new Blur(this.canvas_container, this);
@@ -709,7 +640,7 @@ class Editor {
 			this.Scale(0.25, this.wh/2, this.wh/2, this.canvas_container.width()/2, this.canvas_container.height()/2);
 			this.angle = 0;
 			this.brightness = 0;
-			this.touch.css({ 'left': 142 });
+			this.bright_b.touch.css({ 'left': 142 });
 			this.crop = [
 				(this.wh - this.width) / 2, (this.wh - this.height) / 2,
 				(this.wh + this.width) / 2, (this.wh + this.height) / 2
@@ -718,8 +649,10 @@ class Editor {
 			this.setNeedCropUpdate();
 			// this.UseBtn();
 		});
+
 		this.save_img.on('click', () => { this.SaveImg();
 			console.log('1'); });
+
 		this.exit.on('click', () => {  });
 
 		this.canvas_container.on('wheel', (e) => {
@@ -1019,38 +952,6 @@ class Editor {
 
 		return [r, g, b];
 	}
-
- 	// private UseBtn() : void
-	// {
-	// 	this.crop_container.removeClass('act');
-	// 	this.btn_container.children('.btn').removeClass('btn_use');
-	// 	switch (this.state) {
-	// 		case States.Rotate: this.btn_rotate.addClass('btn_use'); break;
-	// 		case States.Crop: { this.btn_crop.addClass('btn_use'); this.crop_container.addClass('act'); } break;
-	// 		case States.Blur: this.btn_blur.addClass('btn_use'); break;
-	// 		case States.Bright: this.btn_bright.addClass('btn_use'); break;
-	// 		case States.Ready: break;
-	// 	}
-	// }
-	//
-	// private ChangeToolbar() : void
-	// {
-	// 	this.toolbar.addClass('hide');
-	// 	this.tool_rotate.addClass('hide');
-	// 	this.tool_blur.addClass('hide');
-	// 	this.tool_bright.addClass('hide');
-	//
-	// 	this.hideLines();
-	//
-	// 	switch (this.state) {
-	// 		case States.Rotate:	this.toolbar.removeClass('hide'); this.tool_rotate.removeClass('hide'); this.showLines(); break;
-	// 		case States.Crop:	this.toolbar.removeClass('hide'); break;
-	// 		case States.Blur:	this.toolbar.removeClass('hide'); this.tool_blur.removeClass('hide'); break;
-	// 		case States.Bright:	this.toolbar.removeClass('hide'); this.tool_bright.removeClass('hide'); break;
-	// 		case States.Ready:	this.toolbar.addClass('hide'); break;
-	// 	}
-	// }
-
 }
 
 
