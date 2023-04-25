@@ -1,21 +1,34 @@
+html {
+  width: 100%;
+  height: 100%;
+}
+
 body {
   margin: 0;
-  text-align: center;
+  padding: 0;
+  width: 100%;
+  height: 100%;
 }
 
-.hide {
-  display: none !important;
+div.editor {
+  width: 100%;
+  height: 100%;
+  position: relative;
 }
-
-div.top_container {
+div.editor div.top_container {
   display: flex;
   align-items: center;
   grid-gap: 1rem;
   height: 40px;
   padding: 0 24px;
   background-color: rgba(0, 0, 0, 0.7019607843);
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 2;
 }
-div.top_container .btn {
+div.editor div.top_container .btn {
   width: 24px;
   height: 24px;
   background-repeat: no-repeat;
@@ -24,37 +37,37 @@ div.top_container .btn {
   cursor: pointer;
   border-radius: 4px;
 }
-div.top_container .btn:hover {
+div.editor div.top_container .btn:hover {
   background-color: rgba(255, 255, 255, 0.2509803922);
 }
-div.top_container .btn_use {
+div.editor div.top_container .btn_use {
   background-color: cadetblue;
 }
-div.top_container .btn_use:hover {
+div.editor div.top_container .btn_use:hover {
   background-color: #538587;
 }
-div.top_container .btn_container {
+div.editor div.top_container .btn_container {
   display: flex;
   justify-content: center;
   align-items: center;
   grid-gap: 1rem;
 }
-div.top_container .rotate {
+div.editor div.top_container .rotate {
   background-image: url("pic/icon/rotate.svg");
 }
-div.top_container .crop {
+div.editor div.top_container .crop {
   background-image: url("pic/icon/crop.svg");
 }
-div.top_container .blur {
+div.editor div.top_container .blur {
   background-image: url("pic/icon/blur.svg");
 }
-div.top_container .bright {
+div.editor div.top_container .bright {
   background-image: url("pic/icon/luminance.svg");
 }
-div.top_container .scale {
+div.editor div.top_container .scale {
   background-image: url("pic/icon/scale.svg");
 }
-div.top_container .reset {
+div.editor div.top_container .reset {
   display: inline-block;
   padding: 4px;
   background-color: cadetblue;
@@ -62,24 +75,22 @@ div.top_container .reset {
   border-radius: 8px;
   color: white;
 }
-div.top_container .reset:hover {
+div.editor div.top_container .reset:hover {
   background-color: #538587;
 }
-
-div.toolbar {
+div.editor div.top_container div.toolbar {
   display: flex;
   justify-content: flex-end;
   width: 400px;
 }
-
-div.tool_rotate {
+div.editor div.top_container div.tool_rotate {
   display: flex;
   margin: auto;
   justify-content: center;
   align-items: center;
   grid-gap: 1rem;
 }
-div.tool_rotate > div {
+div.editor div.top_container div.tool_rotate > div {
   width: 24px;
   height: 24px;
   background-repeat: no-repeat;
@@ -88,65 +99,63 @@ div.tool_rotate > div {
   cursor: pointer;
   border-radius: 4px;
 }
-div.tool_rotate > div.clockwise {
+div.editor div.top_container div.tool_rotate > div.clockwise {
   background-image: url("pic/icon/90.svg");
 }
-div.tool_rotate > div.counter_clockwise {
+div.editor div.top_container div.tool_rotate > div.counter_clockwise {
   background-image: url("pic/icon/-90.svg");
 }
-div.tool_rotate > div.upside {
+div.editor div.top_container div.tool_rotate > div.upside {
   background-image: url("pic/icon/180.svg");
 }
-div.tool_rotate > div:hover {
+div.editor div.top_container div.tool_rotate > div:hover {
   background-color: rgba(255, 255, 255, 0.2509803922);
 }
-
-div.tool_blur {
+div.editor div.top_container div.tool_blur {
   margin: auto;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   grid-column-gap: 10px;
   align-items: center;
 }
-div.tool_blur > div {
+div.editor div.top_container div.tool_blur > div {
   border-radius: 50%;
   background-color: cadetblue;
   cursor: pointer;
 }
-div.tool_blur > div.brush1 {
+div.editor div.top_container div.tool_blur > div.brush1 {
   height: 14px;
   width: 14px;
 }
-div.tool_blur > div.brush2 {
+div.editor div.top_container div.tool_blur > div.brush2 {
   height: 18px;
   width: 18px;
 }
-div.tool_blur > div.brush3 {
+div.editor div.top_container div.tool_blur > div.brush3 {
   height: 22px;
   width: 22px;
 }
-div.tool_blur > div.brush4 {
+div.editor div.top_container div.tool_blur > div.brush4 {
   height: 26px;
   width: 26px;
 }
-div.tool_blur > div:hover {
+div.editor div.top_container div.tool_blur > div:hover {
   background-color: #538587;
 }
-div.tool_blur .act_brush {
+div.editor div.top_container div.tool_blur .act_brush {
   background-color: brown;
 }
-div.tool_blur .act_brush:hover {
+div.editor div.top_container div.tool_blur .act_brush:hover {
   background-color: #ba4040;
 }
-
-div.tool_bright {
+div.editor div.top_container div.tool_bright {
   position: relative;
   width: 300px;
   height: 2px;
   background-color: brown;
   margin: auto;
 }
-div.tool_bright div.touch {
+div.editor div.top_container div.tool_bright div.touch {
   width: 16px;
   height: 16px;
   background-color: cadetblue;
@@ -156,15 +165,14 @@ div.tool_bright div.touch {
   cursor: pointer;
   border-radius: 4px;
 }
-
-.end_container {
+div.editor div.top_container .end_container {
   margin: auto 0 auto auto;
   display: flex;
   justify-content: center;
   align-items: center;
   grid-gap: 1rem;
 }
-.end_container > div {
+div.editor div.top_container .end_container > div {
   width: 24px;
   height: 24px;
   background-repeat: no-repeat;
@@ -173,71 +181,74 @@ div.tool_bright div.touch {
   cursor: pointer;
   border-radius: 4px;
 }
-.end_container > div.reset_all {
+div.editor div.top_container .end_container > div.reset_all {
   background-image: url("pic/icon/Prohibit.svg");
 }
-.end_container > div.save_img {
+div.editor div.top_container .end_container > div.save_img {
   background-image: url("pic/icon/save.svg");
 }
-.end_container > div.exit {
+div.editor div.top_container .end_container > div.exit {
   background-image: url("pic/icon/X.svg");
 }
-.end_container > div:hover {
+div.editor div.top_container .end_container > div:hover {
   background-color: rgba(255, 255, 255, 0.2509803922);
 }
-
-div.canvas {
+div.editor div.canvas {
   display: inline-block;
   position: relative;
   overflow: hidden;
-  width: 800px;
-  height: 800px;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
 }
-
-div.crop_background {
+div.editor div.canvas > canvas {
   position: absolute;
-  top: 0;
-  left: 0;
+}
+div.editor div.canvas > div.crop_background {
   background-color: rgba(0, 0, 0, 0.3803921569);
-}
-
-div.crop_container {
   position: absolute;
-  top: 0;
-  left: 0;
 }
-div.crop_container > div {
+div.editor div.canvas > div.crop_background > div {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+div.editor div.canvas > div.crop_background > div > div {
   position: absolute;
   display: none;
 }
-div.crop_container > div.top {
+div.editor div.canvas > div.crop_background > div > div.top {
   height: 8px;
   cursor: n-resize;
 }
-div.crop_container > div.right {
+div.editor div.canvas > div.crop_background > div > div.right {
   width: 8px;
   cursor: w-resize;
 }
-div.crop_container > div.bottom {
+div.editor div.canvas > div.crop_background > div > div.bottom {
   height: 8px;
   cursor: n-resize;
 }
-div.crop_container > div.left {
+div.editor div.canvas > div.crop_background > div > div.left {
   width: 8px;
   cursor: w-resize;
 }
-div.crop_container > div.angle_nw {
+div.editor div.canvas > div.crop_background > div > div.angle_nw {
   width: 8px;
   height: 8px;
   cursor: nw-resize;
 }
-div.crop_container > div.angle_ne {
+div.editor div.canvas > div.crop_background > div > div.angle_ne {
   width: 8px;
   height: 8px;
   cursor: ne-resize;
 }
-div.crop_container.act > div {
+div.editor div.canvas > div.crop_background > div.act > div {
   display: block;
+}
+
+.hide {
+  display: none !important;
 }
 
 /*# sourceMappingURL=editor.css.map */

@@ -516,9 +516,21 @@ class Editor {
 		bot_left				: JQuery;
 	}
 
-	constructor() {
+	constructor(container: JQuery) {
 		this.state				= States.None;
-		this.canvas				= $('canvas#test');
+
+		this.top_container 		= $('<div/>', { class: 'top_container' }).appendTo(container);
+		this.btn_container 		= $('<div/>', { class: 'btn_container' }).appendTo(this.top_container);
+		this.toolbar 			= $('<div/>', { class: 'toolbar hide' }).appendTo(this.top_container);
+		this.btn_reset 			= $('<div/>', { class: 'reset', text: 'Сбросить'}).appendTo(this.toolbar);
+		this.end_container 		= $('<div/>', { class: 'end_container' }).appendTo(this.top_container);
+		this.reset_all 			= $('<div/>', { class: 'reset_all', title: 'Сбросить всё' }).appendTo(this.end_container);
+		this.save_img 			= $('<div/>', { class: 'save_img', title: 'Сохранить' }).appendTo(this.end_container);
+		this.exit		 		= $('<div/>', { class: 'exit', title: 'Выход' }).appendTo(this.end_container);
+
+		this.canvas_container	= $('<div/>', { class: 'canvas'}).appendTo(container);
+
+		this.canvas				= $('<canvas/>').appendTo(this.canvas_container) as JQuery<HTMLCanvasElement>;
 		this.context 			= this.canvas[0].getContext('2d');
 		this.angle				= 0;
 		this.blur_size			= 0;
@@ -532,21 +544,8 @@ class Editor {
 		this.left				= 142;
 		this.isShowLines		= false;
 
-
-		/* Elements */
-		this.top_container 		= $('<div/>', { class: 'top_container' });
-		this.btn_container 		= $('<div/>', { class: 'btn_container' });
-		this.btn_reset 			= $('<div/>', { class: 'reset' }).text('Сбросить');
-		this.toolbar 			= $('<div/>', { class: 'toolbar' }).addClass('hide');
-		this.end_container 		= $('<div/>', { class: 'end_container' });
-		this.reset_all 			= $('<div/>', { class: 'reset_all' }).attr('title', 'Сбросить всё');
-		this.save_img 			= $('<div/>', { class: 'save_img' }).attr('title', 'Сохранить');
-		this.exit		 		= $('<div/>', { class: 'exit' }).attr('title', 'Выход');
-
-		this.canvas_container	= $('div.canvas');
 		this.crop_background 	= $('<div/>', { class: 'crop_background' }).appendTo(this.canvas_container);
-
-		this.crop_container 	= $('<div/>', { class: 'crop_container' }).appendTo(this.canvas_container);
+		this.crop_container 	= $('<div/>', {}).appendTo(this.crop_background);
 		this.crop_boxes 		= {
 			top 				: $('<div/>', { class: 'top' }).appendTo(this.crop_container),
 			right 				: $('<div/>', { class: 'right' }).appendTo(this.crop_container),
@@ -558,35 +557,13 @@ class Editor {
 			bot_left 			: $('<div/>', { class: 'angle_ne' }).appendTo(this.crop_container),
 		}
 
+		/* Elements */
+
+
 		this.rotate_b			= new Rotate_b(this);
 		this.crop_b				= new Crop_b(this);
 		this.blur_b				= new Blur_b(this);
 		this.bright_b			= new Bright_b(this);
-
-		/* Building DOM */
-		$('body').prepend(
-			this.top_container.append(
-				this.btn_container.append(
-					// this.rotate_b.btn,
-					// this.crop_b.btn,
-					// this.blur_b.btn,
-					// this.bright_b.btn
-				),
-				this.toolbar.append(
-					// this.rotate_b.tool,
-					// this.crop_b.tool,
-					// this.blur_b.tool,
-					// this.bright_b.tool,
-					this.btn_reset
-				),
-				this.end_container.append(
-					this.reset_all,
-					this.save_img,
-					this.exit
-				)
-			)
-		);
-
 
 		/* Onload image */
 		const img = document.createElement('img');
@@ -736,12 +713,18 @@ class Editor {
 	public Scale(scale: number, px: number, py: number, dx: number, dy: number)
 	{
 		let whs = Math.round(scale * this.wh);
+		console.log(whs, scale, this.wh, this.canvas_container.width(), this.canvas_container.height());
 		if (whs > 6000) return;
-		if (whs < Math.max(this.canvas_container.width(), this.canvas_container.height())) return;
+		if (whs < 100) return;
 		this.scale = scale;
 
 		this.canvas[0].width = whs;
 		this.canvas[0].height = whs;
+
+		let left = (this.canvas_container.width() - whs) / 2;
+		let top = (this.canvas_container.height() - whs) / 2;
+
+		this.canvas.css({'top': top > 0 ? top : 0, 'left': left > 0 ? left : 0});
 
 		this.context.scale(this.scale, this.scale);
 
@@ -850,9 +833,10 @@ class Editor {
 		push('100%','100%');
 		push('100%','0');
 
-		this.crop_background.css({ 'width': whs, 'height': whs});
-		this.crop_container.css({ 'width': whs, 'height': whs});
+		let pleft = (this.canvas_container.width() - whs) / 2;
+		let ptop = (this.canvas_container.height() - whs) / 2;
 
+		this.crop_background.css({ 'width': whs, 'height': whs, 'top': ptop > 0 ? ptop : 0, 'left': pleft > 0 ? pleft : 0});
 		this.crop_background.css({ 'clip-path' : `polygon(${pol.join(',')})` });
 
 		this.crop_boxes.top.css(		{ 'top': (top - space) + 'px', 'left': (left + space) + 'px', 'right': (whs - right + space) + 'px'});

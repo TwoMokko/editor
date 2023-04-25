@@ -3,18 +3,19 @@
 <head>
 	<meta charset="UTF-8">
 	<title>Editor</title>
-	<script src="https://yastatic.net/jquery/3.3.1/jquery.min.js"></script>
+	<script src="https://res.cc.local/plugins/jquery-3.6.0.min.js"></script>
 	<script src="js/editor.js"></script>
 
 	<link rel="stylesheet" href="css/editor.css" type="text/css"/>
 </head>
 <body>
-	<div class = "canvas"><canvas id = "test" width = "300" height = "300"></canvas></div>
-  <script>
-	  let editor = null;
-	  $(() => {
-		  editor = new Editor();
-	  });
-  </script>
+	<div class="editor"></div>
+
+	<script>
+		let editor = null;
+		$(() => {
+			editor = new Editor($('div.editor'));
+		});
+	</script>
 </body>
 </html>

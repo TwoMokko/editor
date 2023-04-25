@@ -179,7 +179,7 @@ declare class Editor {
         bot_right: JQuery;
         bot_left: JQuery;
     };
-    constructor();
+    constructor(container: JQuery);
     ShowLines(): void;
     HideLines(): void;
     canvasToImg(x: number, y: number): [number, number, number, number];
