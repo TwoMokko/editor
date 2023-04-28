@@ -10,6 +10,6 @@
 		"sourceMap": true,
 		"alwaysStrict": true
 	},
-//	"include": ["**/*", "../../../../../base/template/js/common.d.ts"],
+	"include": ["**/*"],
 	"exclude": ["node_module"]
 }

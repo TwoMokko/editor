@@ -60,6 +60,7 @@ class ManageButton {
         this.activated = false;
         this.btn.removeClass('btn_use');
         this.tool.addClass('hide');
+        this.editor.toolbar.addClass('hide');
         this.editor.state = States.Ready;
         this.OnDeactivate();
     }
@@ -318,8 +319,10 @@ class Blur extends MouseActionDMU {
         return true;
     }
     onMove(e) {
-        const mX = (e.pageX - this.editor.canvas_container[0].offsetLeft + this.editor.canvas_container.scrollLeft() - this.editor.canvas[0].width / 2) / this.editor.scale;
-        const mY = (e.pageY - this.editor.canvas_container[0].offsetTop + this.editor.canvas_container.scrollTop() - this.editor.canvas[0].height / 2) / this.editor.scale;
+        let px, py;
+        [px, py, ,] = this.editor.canvasToImg(e.pageX, e.pageY);
+        const mX = px - this.editor.wh / 2;
+        const mY = py - this.editor.wh / 2;
         const rX = (mX * Math.cos(-this.editor.angle * TO_RADIANS) - mY * Math.sin(-this.editor.angle * TO_RADIANS) + this.editor.width / 2);
         const rY = (mX * Math.sin(-this.editor.angle * TO_RADIANS) + mY * Math.cos(-this.editor.angle * TO_RADIANS) + this.editor.height / 2);
         if (e.ctrlKey)
@@ -530,10 +533,14 @@ class Editor {
     ShowLines() { this.isShowLines = true; this.setNeedUpdate(); }
     HideLines() { this.isShowLines = false; this.setNeedUpdate(); }
     canvasToImg(x, y) {
-        const dx = x - this.canvas_container.offset().left;
-        const dy = y - this.canvas_container.offset().top;
+        let whs = Math.round(this.scale * this.wh);
+        let left = this.canvas_container.width() > whs ? (this.canvas_container.width() - whs) / 2 : 0;
+        let top = this.canvas_container.height() > whs ? (this.canvas_container.height() - whs) / 2 : 0;
+        const dx = x - left;
+        const dy = y - top;
         const px = (dx + this.canvas_container.scrollLeft()) / this.scale;
         const py = (dy + this.canvas_container.scrollTop()) / this.scale;
+        console.log('Picture position: ', px, py);
         return [px, py, dx, dy];
     }
     setNeedUpdateBright() { this.needUpdateBright = true; this.needUpdate = true; }
@@ -542,7 +549,6 @@ class Editor {
     /* Methods */
     Scale(scale, px, py, dx, dy) {
         let whs = Math.round(scale * this.wh);
-        console.log(whs, scale, this.wh, this.canvas_container.width(), this.canvas_container.height());
         if (whs > 6000)
             return;
         if (whs < 100)
@@ -552,6 +558,7 @@ class Editor {
         this.canvas[0].height = whs;
         let left = (this.canvas_container.width() - whs) / 2;
         let top = (this.canvas_container.height() - whs) / 2;
+        console.log(this.canvas_container.scrollLeft(), this.canvas_container.scrollTop(), left, top);
         this.canvas.css({ 'top': top > 0 ? top : 0, 'left': left > 0 ? left : 0 });
         this.context.scale(this.scale, this.scale);
         const scroll_x = px * this.scale - dx;
@@ -633,9 +640,9 @@ class Editor {
         push(left + 'px', '100%');
         push('100%', '100%');
         push('100%', '0');
-        let pleft = (this.canvas_container.width() - whs) / 2;
-        let ptop = (this.canvas_container.height() - whs) / 2;
-        this.crop_background.css({ 'width': whs, 'height': whs, 'top': ptop > 0 ? ptop : 0, 'left': pleft > 0 ? pleft : 0 });
+        let pLeft = (this.canvas_container.width() - whs) / 2;
+        let pTop = (this.canvas_container.height() - whs) / 2;
+        this.crop_background.css({ 'width': whs, 'height': whs, 'top': pTop > 0 ? pTop : 0, 'left': pLeft > 0 ? pLeft : 0 });
         this.crop_background.css({ 'clip-path': `polygon(${pol.join(',')})` });
         this.crop_boxes.top.css({ 'top': (top - space) + 'px', 'left': (left + space) + 'px', 'right': (whs - right + space) + 'px' });
         this.crop_boxes.bottom.css({ 'top': (bottom - space) + 'px', 'left': (left + space) + 'px', 'right': (whs - right + space) + 'px' });
